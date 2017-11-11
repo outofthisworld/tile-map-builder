@@ -163,9 +163,6 @@
             mouseDownEvent = null;
         }
         map_canvas.onmousemove = function(event){
-            console.log('mousemove');
-            console.dir(event)
-
             const rect = map_canvas.getBoundingClientRect();
     
             const cX = event.clientX - rect.left;
@@ -185,16 +182,16 @@
                 && canvasY >= Math.abs(mapOffsetY) &&  canvasY < (map[0].length*tHeight*scale)-mapOffsetY){
                 map_canvas.style.cursor='pointer';
                 if(mouseDownEvent){
-                        console.log('mouse down')
                     if(selectedTexture){
-                        console.log('setting tile')
-                        const aX = (canvasX -mapOffsetX)/64;
-                        const aY = (canvasY -mapOffsetY)/64;
+                        const aX = (canvasX -mapOffsetX)/(64*scale);
+                        const aY = (canvasY -mapOffsetY)/(64*scale);
                         map[aX][aY] = selectedTexture;
                     }else{
-                        console.log('err')
-                        alert('select a texture to place in this tile')
+                       const aX = Math.floor((canvasX+mapOffsetX)/(64*scale));
+                       const aY = Math.floor((canvasY+mapOffsetY)/(64*scale));
+                       map[aX][aY] = {color:'red'};
                     }
+                    mouseDownEvent = null;
                 }
             }else{
                 if(mouseDownEvent){
@@ -209,7 +206,7 @@
         function up(){
             requestAnimationFrame(up);
             ctx.clearRect(0,0,map_canvas.width,map_canvas.height);
-            ctx.fillStyle = document.getElementById('canvas_fill').value;
+            ctx.fillStyle = document.getElementById('canvas_fill').value || '#F3F3F3';
             ctx.fillRect(0,0,map_canvas.width,map_canvas.height);
             for(let i = 0; i < map.length;i++){
                 for(let j = 0; j < map[i].length;j++){
@@ -217,8 +214,12 @@
                     if(!map[i][j]){
                         ctx.strokeRect((i*tWidth*scale)-mapOffsetX,(j*tHeight*scale)-mapOffsetY,tWidth*scale,tHeight*scale);
                     }else{
-                        console.log(map[i][j])
-                        ctx.drawImage(map[i][j].image,(i*tWidth*scale)-mapOffsetX,(j*tHeight*scale)-mapOffsetY,tWidth*scale,tHeight*scale)
+                        if(map[i][j].image){
+                            ctx.drawImage(map[i][j].image,(i*tWidth*scale)-mapOffsetX,(j*tHeight*scale)-mapOffsetY,tWidth*scale,tHeight*scale)
+                        }else if(map[i][j].color){
+                            ctx.fillStyle = map[i][j].color;
+                            ctx.fillRect((i*tWidth*scale)-mapOffsetX,(j*tHeight*scale)-mapOffsetY,tWidth*scale,tHeight*scale)
+                        }
                     }
                 }
             }
