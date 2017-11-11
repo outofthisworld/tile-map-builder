@@ -1,0 +1,107 @@
+<html>
+
+    <head>
+        <title>CSS graph anim</title>
+        
+
+        <style>
+
+            *{
+                margin:0px;
+                padding:0px;
+            }
+
+            canvas{
+                width:800px;
+                height:600px;
+                max-width:800px;
+                max-height:600px;
+            }
+            .canvasContainer{
+                width:100%;
+                margin:0 auto;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="canvasContainer">
+        <canvas id="gameCanvas"></canvas>
+        </div>
+      
+    <script>
+
+        let gameCanvas = document.getElementById('gameCanvas'),
+        gameContext = gameCanvas.getContext('2d');
+        let xOffset = 0;
+        let yOffset = 0;
+        const tiles = [];
+          for(let x = 0; x < 100;x++){
+            for(let y = 0; y < 100;y++){
+                tiles[x] = tiles[x] || [];
+                tiles[x][y] = tiles[x][y] || [];
+                (tiles[x][y]).push('#'+Math.floor(Math.random()*16777215).toString(16));
+            }
+        }
+
+        const player={
+            x:20,
+            y:20,
+            lastX:0,
+            lastY:0,
+            update(ctx,tlx,tly){
+                if(this.x != this.lastX || this.y != this.lastY){
+                    console.log(this.x,this.y)
+                }
+                this.lastX= this.x;
+                this.lastY= this.y;
+                ctx.fillStyle = 'red';
+                ctx.fillRect(this.x-tlx,this.y-tly,20,20);
+            }
+        }
+
+        function up(){
+            gameContext.clearRect(0,0,gameCanvas.width,gameCanvas.height);
+            gameContext.fillStyle = 'black';
+            gameContext.fillRect(0,0,gameCanvas.width,gameCanvas.height);
+            const tlX = player.x - (gameCanvas.width/2)
+            const tlY = player.y - (gameCanvas.height/2)
+            for(let x = 0; x < 100;x++){
+                const xPos = (x*64)-tlX;
+
+                for(let y = 0; y < 100;y++){
+                    gameContext.fillStyle=tiles[x][y];
+                    const yPos = (y*64)-tlY;
+     
+                    gameContext.fillRect(xPos,yPos, 64, 64);
+                }
+            }
+            player.update(gameContext,tlX,tlY);
+            requestAnimationFrame(up);
+        }
+
+        window.addEventListener('keydown',function(event){
+            if(event.keyCode === 39)
+                player.x = player.x+20;
+
+            if(event.keyCode === 37)
+               player.x = player.x -20;
+
+            if(event.keyCode === 38)
+                player.y -= 20;
+
+            if(event.keyCode === 40)
+                player.y += 20;
+            
+            if(event.keyCode === 32){
+                const tileX = ~~(player.x / 64);
+                const tileY = ~~(player.y / 64);
+                tiles[tileX][tileY] = 'orange';
+            }
+        
+        })
+
+        requestAnimationFrame(up);
+    </script>
+    </body>
+</html>

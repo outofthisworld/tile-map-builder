@@ -1,0 +1,323 @@
+
+
+<html>
+
+<head>
+
+    <title>Map builder</title>
+
+    <style>
+
+        *{
+            margin:0px;
+            padding:0px;
+        }
+        .container{
+            width:100%;
+            margin:0 auto;
+        }
+
+        .container .main_section{
+            width:70%;
+            float:left;
+        }
+
+        .container .main_section canvas{
+            width:100%;
+            height:100%;
+        }
+
+        .container .side_bar{
+            width:30%;
+            float:left;
+            height:100vh;
+            overflow:scroll;
+        }
+
+        .side_bar #tiles_list{
+            list-style-type: none;
+            width:100%;
+            height:100%;
+            background:#f3f3f3;
+            overflow:scroll;
+        }
+
+        .side_bar #tiles_list li{
+            width:100%;
+            height:100px;
+            max-height:100px;
+            min-height:100px;
+        }
+
+        .side_bar #tiles_list li img{
+            width:30%;
+            height:100px;
+            max-height:100px;
+            min-height:100px;
+        }
+
+        input{
+            display:block;
+            margin:5px auto;
+            width:80%;
+            padding:10px;
+            border:none;
+        }
+        input[type="button"]{
+            padding:15px;
+            background:violet;
+            font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color:white;
+            text-transform: uppercase;
+        }
+        input[type="number"]{
+            width:50%;
+            padding:5px;
+            margin-left:40%;
+        }
+
+        input:not(:focus){
+            border:2px solid #f3f3f3;
+        }
+        small{
+            padding-left:12%;
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif
+        }
+
+        .zoom{
+            position:absolute;
+            top:10px;
+            left:10px;
+            width:5%;
+        }
+        #zoom_out{
+            left:6%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="main_section">
+            <canvas id="map_canvas"></canvas>
+        </div>
+        <div class="side_bar">
+            <small>Canvas fill:</small>
+            <input id="canvas_fill" type="text" placeholder="e.g black,#f3f3f3,rgba(22,22,22,0)"/>
+            <small>Map size:</small>
+            <input id="map_size_tiles_x" min="1" type="number" placeholder="Number of tiles x" required/>
+            <input id="map_size_tiles_y" min="1" type="number" placeholder="Number of tiles y" required/>
+            <input id="tile_width" type="number" min="1" placeholder="Tile width" required/>
+            <input id="tile_height" type="number" min="1" placeholder="Tile height" required/>
+            <input type="button" value="Generate tile map" id="generate_map"/>
+            <small>Choose an image:</small>
+            <input id="image" type="file" accept="image/*"/>
+
+            <small>Make the image a background image:</small>
+            <input id="bg_img_x" type="number" placeholder="x position" required/>
+            <input id="bg_img_y" type="number" placeholder="y position" required/>
+            <input type="button" value="Add as background" id="add_background_image"/>
+            </hr>
+            <small>Make the image a tile image:</small>
+            <input id="id" type="number" placeholder="Texture id" required/>
+            <input type="button" value="Add tile texture" id="add_tile_image"/>
+            <ul id="tiles_list">
+            <ul>
+        <div>
+    </div>
+
+    <input type="button" value="+" class="zoom" id="zoom_in"/>
+    <input type="button" value="-" class="zoom" id="zoom_out"/>
+
+    <script>
+
+        const map_canvas = document.getElementById('map_canvas'),
+              ctx = map_canvas.getContext('2d'),
+              selectedTexture = null;
+        let map = [],
+              tWidth=0,
+              tHeight=0,
+              mapOffsetX=0,
+              mapOffsetY=0,
+              scale=1;
+            
+        let r = map_canvas.getBoundingClientRect();
+        map_canvas.width = 800;
+        map_canvas.height = 800;
+
+            
+        document.getElementById('zoom_in').onclick = function(event){
+            scale+=0.1;
+        }
+
+        document.getElementById('zoom_out').onclick = function(event){
+            scale-=0.1;
+        }
+
+        let mouseDownEvent = null;
+        map_canvas.onmousedown = function(event){
+            mouseDownEvent = event;
+        }
+
+        map_canvas.onmouseup = function(event){
+            mouseDownEvent = null;
+        }
+        map_canvas.onmousemove = function(event){
+            console.log('mousemove');
+            console.dir(event)
+
+            const rect = map_canvas.getBoundingClientRect();
+    
+            const cX = event.clientX - rect.left;
+            const cY = event.clientY - rect.top;
+
+            const boundingRectWidth = rect.right - rect.left;
+            const boundingRectHeight = rect.bottom - rect.top;
+
+            const ratioX = map_canvas.width/boundingRectWidth;
+            const ratioY = map_canvas.height/boundingRectHeight;
+
+            const canvasX = cX * ratioX;
+            const canvasY = cY * ratioY;
+
+        
+            if(map.length && canvasX >= Math.abs(mapOffsetX) && canvasX <= (map.length*tWidth*scale)-mapOffsetX
+                && canvasY >= Math.abs(mapOffsetY) &&  canvasY < (map[0].length*tHeight*scale)-mapOffsetY){
+                map_canvas.style.cursor='pointer';
+                if(mouseDownEvent){
+                        console.log('mouse down')
+                    if(selectedTexture){
+                        console.log('setting tile')
+                        const aX = (canvasX -mapOffsetX)/64;
+                        const aY = (canvasY -mapOffsetY)/64;
+                        map[aX][aY] = selectedTexture;
+                    }else{
+                        console.log('err')
+                        alert('select a texture to place in this tile')
+                    }
+                }
+            }else{
+                if(mouseDownEvent){
+                    const dX = mouseDownEvent.clientX-event.clientX;
+                    const dY =  mouseDownEvent.clientY-event.clientY;
+                    mapOffsetX = dX;
+                    mapOffsetY = dY;
+                }
+                map_canvas.style.cursor = "move";
+            }
+        }
+        function up(){
+            requestAnimationFrame(up);
+            ctx.clearRect(0,0,map_canvas.width,map_canvas.height);
+            ctx.fillStyle = document.getElementById('canvas_fill').value;
+            ctx.fillRect(0,0,map_canvas.width,map_canvas.height);
+            for(let i = 0; i < map.length;i++){
+                for(let j = 0; j < map[i].length;j++){
+                    ctx.strokeStyle = 'orange';
+                    if(!map[i][j]){
+                        ctx.strokeRect((i*tWidth*scale)-mapOffsetX,(j*tHeight*scale)-mapOffsetY,tWidth*scale,tHeight*scale);
+                    }else{
+                        console.log(map[i][j])
+                        ctx.drawImage(map[i][j].image,(i*tWidth*scale)-mapOffsetX,(j*tHeight*scale)-mapOffsetY,tWidth*scale,tHeight*scale)
+                    }
+                }
+            }
+
+        }
+        requestAnimationFrame(up);
+
+        const tiles_list = document.getElementById('tiles_list');
+        const tile_button = document.getElementById('add_tile_image');
+        document.getElementById('image').onchange = function(event){
+            var reader = new FileReader();
+            reader.onload = function(){
+                tile_button.setAttribute('data-file-target',reader.result);
+            };
+            reader.readAsDataURL(event.target.files[0])
+        }
+
+        document.getElementById('generate_map').onclick = function(event){
+            const tilesX = document.getElementById('map_size_tiles_x').value;
+            const tilesY = document.getElementById('map_size_tiles_y').value;
+            const tileWidth = document.getElementById('tile_width').value;
+            const tileHeight = document.getElementById('tile_height').value;
+
+            const errors =[];
+            if(isNaN(tilesX) || parseInt(tilesX) <= 0){
+                errors[errors.length] = 'Map x tiles must be above 0';
+            }
+            if(isNaN(tilesY) || parseInt(tilesY) <= 0){
+                errors[errors.length] = 'Map y tiles must be above 0';
+            }
+            if(isNaN(tileWidth) || parseInt(tileWidth) <= 0){
+                errors[errors.length] = 'tile width must be above 0';
+            }
+            if(isNaN(tileHeight) || parseInt(tileHeight) <= 0){
+                errors[errors.length] = 'tile height must be above 0';
+            }
+
+            if(errors.length > 0){
+                alert(errors.join(':'));
+                return;
+            }
+
+            const newmap = []
+
+            for(let i = 0; i < tilesX;i++){
+                newmap[i] = newmap[i] || [];
+                for(let j =0; j < tilesY;j++){
+                    newmap[i][j] = 0;
+                }
+            }
+
+            for(let i = 0; i < map.length;i++){
+                if(i >= newmap.length) break;
+                for(let j = 0; j < map[i].length;j++){
+                    if(j >= newmap[i].length) break;
+                    newmap[i][j] = map[i][j];
+                }
+            }
+            tWidth = tileWidth;
+            tHeight = tileHeight;
+            map=newmap;
+        }
+
+        document.getElementById('add_tile_image').onclick = function(event){
+            if(!tile_button.hasAttribute('data-file-target')){
+                alert('Please select a file')
+                return;
+            }
+
+            console.dir(document.getElementById('id'))
+            const idEle = document.getElementById('id');
+            if(!idEle.value){
+                alert('Please enter an id for the tile')
+                return;
+            }
+            const url = tile_button.getAttribute('data-file-target');
+
+            const li = document.createElement('li');
+            const imgElement = document.createElement('img');
+            imgElement.src = url;
+    
+            tile_button.removeAttribute('data-file-target');
+
+            //Format list
+            li.classList.add('li');
+            li.onclick = function(event){
+                li.style.border = '2px solid red';
+                selectedTexture = {
+                    id:idEle.value,
+                    image:url
+                };
+            }
+            li.appendChild(imgElement);
+            tiles_list.appendChild(li);
+
+            //Reset
+            document.getElementById('image').value = '';
+            document.getElementById('id').value = '';
+        }
+    </script>
+</body>
+</html>
