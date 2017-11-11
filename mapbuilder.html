@@ -18,7 +18,7 @@
         }
 
         .container .main_section{
-            width:70%;
+            width:60%;
             float:left;
         }
 
@@ -34,23 +34,23 @@
             overflow:scroll;
         }
 
-        .side_bar #tiles_list{
+        #tiles_list{
             list-style-type: none;
             width:100%;
             height:100%;
-            background:#f3f3f3;
             overflow:scroll;
+            border:2px solid #f3f3f3;
         }
 
-        .side_bar #tiles_list li{
+        #tiles_list li{
             width:100%;
             height:100px;
             max-height:100px;
             min-height:100px;
         }
 
-        .side_bar #tiles_list li img{
-            width:30%;
+        #tiles_list li img{
+            width:100%;
             height:100px;
             max-height:100px;
             min-height:100px;
@@ -93,6 +93,13 @@
         #zoom_out{
             left:6%;
         }
+
+        .middle_section{
+            text-align:center;
+            width:10%;
+            min-width:10%;
+            float:left;
+        }
     </style>
 </head>
 <body>
@@ -100,6 +107,11 @@
     <div class="container">
         <div class="main_section">
             <canvas id="map_canvas"></canvas>
+        </div>
+        <div class="middle_section">
+            <ul id="tiles_list">
+                Textures:
+            <ul>
         </div>
         <div class="side_bar">
             <small>Canvas fill:</small>
@@ -121,8 +133,6 @@
             <small>Make the image a tile image:</small>
             <input id="id" type="number" placeholder="Texture id" required/>
             <input type="button" value="Add tile texture" id="add_tile_image"/>
-            <ul id="tiles_list">
-            <ul>
         <div>
     </div>
 
@@ -132,18 +142,18 @@
     <script>
 
         const map_canvas = document.getElementById('map_canvas'),
-              ctx = map_canvas.getContext('2d'),
-              selectedTexture = null;
+              ctx = map_canvas.getContext('2d');
         let map = [],
               tWidth=0,
               tHeight=0,
               mapOffsetX=0,
               mapOffsetY=0,
-              scale=1;
+              scale=1,
+              selectedTexture = null;
             
         let r = map_canvas.getBoundingClientRect();
         map_canvas.width = 800;
-        map_canvas.height = 800;
+        map_canvas.height = 1000;
 
             
         document.getElementById('zoom_in').onclick = function(event){
@@ -182,9 +192,10 @@
                 && canvasY >= Math.abs(mapOffsetY) &&  canvasY < (map[0].length*tHeight*scale)-mapOffsetY){
                 map_canvas.style.cursor='pointer';
                 if(mouseDownEvent){
+                    console.log(selectedTexture)
                     if(selectedTexture){
-                        const aX = (canvasX -mapOffsetX)/(64*scale);
-                        const aY = (canvasY -mapOffsetY)/(64*scale);
+                        const aX = Math.floor((canvasX+mapOffsetX)/(64*scale));
+                        const aY = Math.floor((canvasY+mapOffsetY)/(64*scale));
                         map[aX][aY] = selectedTexture;
                     }else{
                        const aX = Math.floor((canvasX+mapOffsetX)/(64*scale));
@@ -215,7 +226,12 @@
                         ctx.strokeRect((i*tWidth*scale)-mapOffsetX,(j*tHeight*scale)-mapOffsetY,tWidth*scale,tHeight*scale);
                     }else{
                         if(map[i][j].image){
-                            ctx.drawImage(map[i][j].image,(i*tWidth*scale)-mapOffsetX,(j*tHeight*scale)-mapOffsetY,tWidth*scale,tHeight*scale)
+                            if(!map[i][j].displayImage){
+                                const imgElement = document.createElement('img');
+                                imgElement.src = map[i][j].image;
+                                map[i][j].displayImage = imgElement;
+                            }
+                            ctx.drawImage(map[i][j].displayImage,(i*tWidth*scale)-mapOffsetX,(j*tHeight*scale)-mapOffsetY,tWidth*scale,tHeight*scale)
                         }else if(map[i][j].color){
                             ctx.fillStyle = map[i][j].color;
                             ctx.fillRect((i*tWidth*scale)-mapOffsetX,(j*tHeight*scale)-mapOffsetY,tWidth*scale,tHeight*scale)
