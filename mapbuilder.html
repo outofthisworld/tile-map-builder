@@ -507,7 +507,7 @@
                                 }
                                 const tiles_list = document.getElementById('tiles_list');
                                 tiles_list.appendChild(li);
-                                textures[key].img = img;
+                                textures[key] = img;
                                 currentTextureID = key;
                             }
 
@@ -521,7 +521,7 @@
                             for(let i = 0; i <loaded_map.length;i++){
                                 for(let j = 0; j <loaded_map[i].length;j++){
                                     if(loaded_map[i][j]){
-                                        loaded_map[i][j].image = textures[loaded_map[i][j].id].img;
+                                        loaded_map[i][j].image = textures[loaded_map[i][j].id];
                                     }
                                 }
                             }
