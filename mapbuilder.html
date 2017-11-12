@@ -113,20 +113,23 @@
             max-width: 90%;
             min-width: 80%;
         }
-        nav{
-            width:100%;
-            list-style-type: none; 
-            text-align:right;
+
+        nav {
+            width: 100%;
+            list-style-type: none;
+            text-align: right;
         }
-        nav li{
-            display:inline-block;
-            padding:10px;
-            background:violet;
-            color:white;
+
+        nav li {
+            display: inline-block;
+            padding: 10px;
+            background: violet;
+            color: white;
         }
-        nav li:hover{
-            background:pink;
-            cursor:pointer;
+
+        nav li:hover {
+            background: pink;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -136,7 +139,7 @@
         <li id="save_map">
             Save
         </li>
-         <li id="load_map">
+        <li id="load_map">
             Load
         </li>
     </nav>
@@ -232,31 +235,42 @@
                     const canvasX = cX * ratioX;
                     const canvasY = cY * ratioY;
 
-
                     if (map.length && canvasX >= Math.abs(mapOffsetX) && canvasX <= (map.length * tWidth * scale) - mapOffsetX
                         && canvasY >= Math.abs(mapOffsetY) && canvasY < (map[0].length * tHeight * scale) - mapOffsetY) {
                         map_canvas.style.cursor = 'pointer';
                         if (mouseDownEvent) {
-                            if (selectedTexture) {
-                                const aX = Math.floor((canvasX + mapOffsetX) / (64 * scale));
-                                const aY = Math.floor((canvasY + mapOffsetY) / (64 * scale));
-                                map[aX][aY] = selectedTexture;
-                            } else {
-                                const aX = Math.floor((canvasX + mapOffsetX) / (64 * scale));
-                                const aY = Math.floor((canvasY + mapOffsetY) / (64 * scale));
-                                map[aX][aY] = { color: 'red' };
-                            }
-                            generateMapData();
 
+                            if (!selectedTexture) {
+                                alert('A texture must be selected before selecting a tile');
+                                return;
+                            }
+
+                            const aX = Math.floor((canvasX + mapOffsetX) / (64 * scale));
+                            const aY = Math.floor((canvasY + mapOffsetY) / (64 * scale));
+
+                            if (map[aX][aY]) {
+                                if (!Array.isArray(map[aX][aY])) {
+                                    const current = map[aX][aY];
+                                    if (selectedTexture.id == current.id) return;
+                                    map[aX][aY] = [current, selectedTexture];
+                                } else {
+                                    const arr = map[aX][aY];
+                                    const last = arr[arr.length - 1];
+                                    if (last.id == selectedTexture.id) return;
+                                    arr.push(selectedTexture);
+                                }
+                            } else {
+                                map[aX][aY] = selectedTexture;
+                            }
+
+                            generateMapData();
                             mouseDownEvent = null;
                         }
-                    } else {
-                        if (mouseDownEvent) {
-                            const dX = mouseDownEvent.clientX - event.clientX;
-                            const dY = mouseDownEvent.clientY - event.clientY;
-                            mapOffsetX = dX;
-                            mapOffsetY = dY;
-                        }
+                    } else if (mouseDownEvent) {
+                        const dX = mouseDownEvent.clientX - event.clientX;
+                        const dY = mouseDownEvent.clientY - event.clientY;
+                        mapOffsetX = dX;
+                        mapOffsetY = dY;
                         map_canvas.style.cursor = "move";
                     }
                 }
@@ -440,7 +454,7 @@
                     map_data.textContent += "]";
                 }
 
-                document.getElementById('save_map').onclick = function(event){
+                document.getElementById('save_map').onclick = function (event) {
                     const object_to_serialize = {
                         tWidth,
                         tHeight
@@ -458,41 +472,41 @@
                     object_to_serialize.textures = imgs;
                     const serializedObj = JSON.stringify(object_to_serialize);
                     var a = document.createElement("a");
-                    var file = new Blob([serializedObj], {type: 'application/json'});
+                    var file = new Blob([serializedObj], { type: 'application/json' });
                     a.href = URL.createObjectURL(file);
                     a.download = 'map';
                     a.click();
                 }
 
-                document.getElementById('load_map').onclick = function(event){
+                document.getElementById('load_map').onclick = function (event) {
                     const input = document.createElement('input');
-                    input.type='file';
-                    input.accept='application/json';
-                    input.onchange = function(event){
+                    input.type = 'file';
+                    input.accept = 'application/json';
+                    input.onchange = function (event) {
                         const reader = new FileReader();
                         reader.onload = function () {
                             let json = reader.result;
 
-                            try{
+                            try {
                                 json = JSON.parse(json);
-                            }catch(err){
+                            } catch (err) {
                                 alert('Error loading json file');
                                 return;
                             }
 
-                            if(!json.map || !json.textures ||  json.tWidth == null || isNaN(json.tWidth) || json.tHeight == null || isNaN(json.tHeight)){
+                            if (!json.map || !json.textures || json.tWidth == null || isNaN(json.tWidth) || json.tHeight == null || isNaN(json.tHeight)) {
                                 alert('Invalid json file format');
                                 return;
                             }
 
                             const textures = json.textures;
-                            
-                            for(key in textures){
+
+                            for (key in textures) {
                                 const li = document.createElement('li');
-                                li.setAttribute('data-id',key);
+                                li.setAttribute('data-id', key);
                                 const img = document.createElement('img');
                                 img.src = textures[key];
-                                img.setAttribute('data-id',key);
+                                img.setAttribute('data-id', key);
                                 li.appendChild(img);
                                 img.onclick = function (event) {
                                     const eles = document.querySelectorAll('#tiles_list li img');
@@ -513,14 +527,14 @@
 
                             const loaded_map = json.map;
 
-                            if(!Array.isArray(loaded_map)){
+                            if (!Array.isArray(loaded_map)) {
                                 alert('Invalid json file format');
                                 return;
                             }
 
-                            for(let i = 0; i <loaded_map.length;i++){
-                                for(let j = 0; j <loaded_map[i].length;j++){
-                                    if(loaded_map[i][j]){
+                            for (let i = 0; i < loaded_map.length; i++) {
+                                for (let j = 0; j < loaded_map[i].length; j++) {
+                                    if (loaded_map[i][j]) {
                                         loaded_map[i][j].image = textures[loaded_map[i][j].id];
                                     }
                                 }
