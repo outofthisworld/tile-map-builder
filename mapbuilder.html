@@ -175,10 +175,11 @@
             </hr>
             <small>Make the image a tile image:</small>
             <input type="button" value="Add tile texture" id="add_tile_image" />
-            <small>Generated map data:</small>
+            <small>Map data:</small>
             <textarea id="map_data" disabled>
 
             </textarea>
+            <input type="button" value="Generate map data" id="generate_map_data" onclick="generateMapData();" />
             <div>
             </div>
 
@@ -249,22 +250,29 @@
                             const aY = Math.floor((canvasY + mapOffsetY) / (64 * scale));
 
                             if (map[aX][aY]) {
+                                console.log('Tile exists in position... ', map[aX][aY]);
                                 if (!Array.isArray(map[aX][aY])) {
+                                    console.log('Was not an array...creating array ');
                                     const current = map[aX][aY];
+                                    console.log(current)
+                                    console.log(selectedTexture)
+                                    console.log(current.id == selectedTexture.id);
                                     if (selectedTexture.id == current.id) return;
+                                    console.log('Settting to array.. didn\'t return');
                                     map[aX][aY] = [current, selectedTexture];
+                                    console.dir(map[aX][aY]);
+                                    console.dir(map)
                                 } else {
+                                    console.log('Was array.. ');
                                     const arr = map[aX][aY];
                                     const last = arr[arr.length - 1];
                                     if (last.id == selectedTexture.id) return;
                                     arr.push(selectedTexture);
                                 }
                             } else {
+                                console.log('No tile in position, setting to selected texture ', selectedTexture);
                                 map[aX][aY] = selectedTexture;
-                            }
-
-                            generateMapData();
-                            mouseDownEvent = null;
+                            }                      
                         }
                     } else if (mouseDownEvent) {
                         const dX = mouseDownEvent.clientX - event.clientX;
@@ -317,11 +325,12 @@
                             if (!map[i][j]) {
                                 ctx.strokeRect((i * tWidth * scale) - mapOffsetX, (j * tHeight * scale) - mapOffsetY, tWidth * scale, tHeight * scale);
                             } else {
-                                if (map[i][j].image) {
-                                    ctx.drawImage(map[i][j].image, (i * tWidth * scale) - mapOffsetX, (j * tHeight * scale) - mapOffsetY, tWidth * scale, tHeight * scale)
-                                } else if (map[i][j].color) {
-                                    ctx.fillStyle = map[i][j].color;
-                                    ctx.fillRect((i * tWidth * scale) - mapOffsetX, (j * tHeight * scale) - mapOffsetY, tWidth * scale, tHeight * scale)
+                                const arr = !Array.isArray(map[i][j]) ? [map[i][j]] : map[i][j];
+                                console.log('Arr: ', arr);
+                                for (let k = 0; k < arr.length; k++) {
+                                    if (arr[k].image) {
+                                        ctx.drawImage(arr[k].image, (i * tWidth * scale) - mapOffsetX, (j * tHeight * scale) - mapOffsetY, tWidth * scale, tHeight * scale)
+                                    }
                                 }
                             }
                         }
@@ -384,7 +393,6 @@
                     tWidth = tileWidth;
                     tHeight = tileHeight;
                     map = newmap;
-                    generateMapData();
                 }
 
                 document.getElementById('add_tile_image').onclick = function (event) {
@@ -404,16 +412,17 @@
                     li.classList.add('li');
                     li.setAttribute('data-id', currentTextureID);
                     imgElement.setAttribute('data-id', currentTextureID);
+                    const textureObj = {
+                        id: currentTextureID,
+                        image: imgElement
+                    }
                     imgElement.onclick = function (event) {
                         const eles = document.querySelectorAll('#tiles_list li img');
                         for (let i = 0; i < eles.length; i++) {
                             eles[i].style.border = 'none';
                         }
                         imgElement.style.border = '2px solid red';
-                        selectedTexture = {
-                            id: currentTextureID,
-                            image: imgElement
-                        };
+                        selectedTexture = textureObj;
                     }
                     li.appendChild(imgElement);
                     tiles_list.appendChild(li);
@@ -445,7 +454,23 @@
                     for (let i = 0; i < map.length; i++) {
                         map_data.textContent += "[";
                         for (let j = 0; j < map[i].length; j++) {
-                            map_data.textContent += ((map[i][j].id ? map[i][j].id : "0") + ",");
+
+                            if (!map[i][j]) {
+                                map_data.textContent += "0,";
+                                continue;
+                            }
+
+                            if (Array.isArray(map[i][j])) {
+                                map_data.textContent += '[';
+                                for (let k = 0; k < map[i][j].length; k++) {
+                                    map_data.textContent += map[i][j][k].id + ',';
+                                }
+                                map_data.textContent = map_data.textContent.substr(0, map_data.textContent.length - 1);
+                                map_data.textContent += ']';
+                            } else {
+                                map_data.textContent += map[i][j].id;
+                            }
+                            map_data.textContent += ',';
                         }
                         map_data.textContent = map_data.textContent.substr(0, map_data.textContent.length - 1);
                         map_data.textContent += "],";
@@ -535,7 +560,10 @@
                             for (let i = 0; i < loaded_map.length; i++) {
                                 for (let j = 0; j < loaded_map[i].length; j++) {
                                     if (loaded_map[i][j]) {
-                                        loaded_map[i][j].image = textures[loaded_map[i][j].id];
+                                        const arr = Array.isArray(map[i][j]) ? map[i][j] : [map[i][j]];
+                                        for (let k = 0; k < arr.length; k++) {
+                                            arr[k].image = textures[arr[k].id];
+                                        }
                                     }
                                 }
                             }
@@ -543,7 +571,6 @@
                             map = loaded_map;
                             tWidth = parseInt(json.tWidth);
                             tHeight = parseInt(json.tHeight);
-                            generateMapData();
                         };
                         reader.readAsText(event.target.files[0])
                     }
