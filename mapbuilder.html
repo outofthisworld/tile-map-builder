@@ -671,7 +671,9 @@
                 input.accept = 'application/json';
                 input.onchange = function(event) {
                     const reader = new FileReader();
-                    reader.onload = parse_map_json;
+                    reader.onload = function() {
+                        parse_map_json(reader.result)
+                    };
                     reader.readAsText(event.target.files[0])
                 }
                 input.click();
@@ -712,8 +714,7 @@
             }
 
 
-            function parse_map_json() {
-                let json = reader.result;
+            function parse_map_json(json) {
 
                 try {
                     json = JSON.parse(json);
@@ -764,7 +765,7 @@
                 for (let i = 0; i < loaded_map.length; i++) {
                     for (let j = 0; j < loaded_map[i].length; j++) {
                         if (loaded_map[i][j]) {
-                            const arr = Array.isArray(map[i][j]) ? map[i][j] : [map[i][j]];
+                            const arr = Array.isArray(loaded_map[i][j]) ? loaded_map[i][j] : [loaded_map[i][j]];
                             for (let k = 0; k < arr.length; k++) {
                                 arr[k].image = textures[arr[k].id];
                             }
