@@ -250,27 +250,17 @@
                             const aY = Math.floor((canvasY + mapOffsetY) / (64 * scale));
 
                             if (map[aX][aY]) {
-                                console.log('Tile exists in position... ', map[aX][aY]);
                                 if (!Array.isArray(map[aX][aY])) {
-                                    console.log('Was not an array...creating array ');
                                     const current = map[aX][aY];
-                                    console.log(current)
-                                    console.log(selectedTexture)
-                                    console.log(current.id == selectedTexture.id);
                                     if (selectedTexture.id == current.id) return;
-                                    console.log('Settting to array.. didn\'t return');
                                     map[aX][aY] = [current, selectedTexture];
-                                    console.dir(map[aX][aY]);
-                                    console.dir(map)
                                 } else {
-                                    console.log('Was array.. ');
                                     const arr = map[aX][aY];
                                     const last = arr[arr.length - 1];
                                     if (last.id == selectedTexture.id) return;
                                     arr.push(selectedTexture);
                                 }
                             } else {
-                                console.log('No tile in position, setting to selected texture ', selectedTexture);
                                 map[aX][aY] = selectedTexture;
                             }                      
                         }
@@ -284,7 +274,6 @@
                 }
 
                 window.addEventListener('keydown', function (event) {
-                    console.log(event.keyCode);
                     switch (event.keyCode) {
                         case 37:
                             toPanX -= 50;
@@ -326,7 +315,6 @@
                                 ctx.strokeRect((i * tWidth * scale) - mapOffsetX, (j * tHeight * scale) - mapOffsetY, tWidth * scale, tHeight * scale);
                             } else {
                                 const arr = !Array.isArray(map[i][j]) ? [map[i][j]] : map[i][j];
-                                console.log('Arr: ', arr);
                                 for (let k = 0; k < arr.length; k++) {
                                     if (arr[k].image) {
                                         ctx.drawImage(arr[k].image, (i * tWidth * scale) - mapOffsetX, (j * tHeight * scale) - mapOffsetY, tWidth * scale, tHeight * scale)
@@ -434,49 +422,34 @@
                 function generateMapData() {
                     const map_data = document.getElementById('map_data');
                     map_data.textContent = "";
-                    map_data.textContent += "const tile_sprites = {\n"
-                    map_data.textContent += `createImageWithUrl:function(url){
-                        const img = document.createElement('img');
-                        img.src = url;
-                        return img;
-                    },\n`;
+                    const imgs = {}
                     const textures = document.querySelectorAll('#tiles_list li');
                     for (let i = 0; i < textures.length; i++) {
                         const li = textures[i];
                         const id = li.getAttribute('data-id');
                         const img = li.children[0];
-                        console.dir(img)
-                        map_data.textContent += `${id}:this.createImageWithUrl('images/tile${id}.png'),\n`
+                        imgs[id] = img.src;
                     }
-                    map_data.textContent = map_data.textContent.substr(0, map_data.textContent.length - 2);
-                    map_data.textContent += "}";
-                    map_data.textContent += "\nconst _map = [";
-                    for (let i = 0; i < map.length; i++) {
-                        map_data.textContent += "[";
-                        for (let j = 0; j < map[i].length; j++) {
 
-                            if (!map[i][j]) {
-                                map_data.textContent += "0,";
-                                continue;
-                            }
+                    const map_to_json = [];
 
-                            if (Array.isArray(map[i][j])) {
-                                map_data.textContent += '[';
-                                for (let k = 0; k < map[i][j].length; k++) {
-                                    map_data.textContent += map[i][j][k].id + ',';
+                    for(let i = 0; i < map.length;i++){
+                        map_to_json[i] = new Array(map[i].length).fill(0);
+                        for(let j = 0; j < map[i].length;j++){
+                            if(!map[i][j]) continue;
+                            if(Array.isArray(map[i][j])){
+                                map_to_json[i][j] = [];
+                                for(let k = 0; k < map[i][j].length;k++){
+                                    map_to_json[i][j][k] = map[i][j][k].id;
                                 }
-                                map_data.textContent = map_data.textContent.substr(0, map_data.textContent.length - 1);
-                                map_data.textContent += ']';
-                            } else {
-                                map_data.textContent += map[i][j].id;
+                            }else{
+                                map_to_json[i][j] = map[i][j].id;
                             }
-                            map_data.textContent += ',';
                         }
-                        map_data.textContent = map_data.textContent.substr(0, map_data.textContent.length - 1);
-                        map_data.textContent += "],";
                     }
-                    map_data.textContent = map_data.textContent.substr(0, map_data.textContent.length - 1);
-                    map_data.textContent += "]";
+
+                    map_data.textContent += `const tile_sprites = ${JSON.stringify(imgs)};`
+                    map_data.textContent += `const map_data = ${JSON.stringify(map_to_json)};`;
                 }
 
                 document.getElementById('save_map').onclick = function (event) {
