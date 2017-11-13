@@ -9,32 +9,31 @@
             margin: 0px;
             padding: 0px;
         }
-
+        
         .container {
             width: 100%;
             margin: 0 auto;
         }
-
+        
         .container .main_section {
             width: 67%;
             float: left;
             position: relative;
         }
-
+        
         .container .main_section canvas {
             width: 100%;
             height: 100%;
         }
-
+        
         .container .side_bar {
             width: 16%;
             float: right;
             height: 100%;
             overflow: scroll;
             text-align: left;
-
         }
-
+        
         .container .options {
             color: white;
             width: 10%;
@@ -42,7 +41,7 @@
             background: rgb(68, 68, 80);
             min-height: 100%;
         }
-
+        
         #tiles_list {
             list-style-type: none;
             width: 100%;
@@ -51,14 +50,14 @@
             overflow: scroll;
             border: 2px solid #f3f3f3;
         }
-
+        
         #tiles_list li {
             width: 100%;
             height: 80px;
             max-height: 80px;
             min-height: 80px;
         }
-
+        
         #tiles_list li img {
             display: block;
             margin: 0 auto;
@@ -67,7 +66,7 @@
             max-height: 80px;
             min-height: 80px;
         }
-
+        
         input {
             display: block;
             margin: 5px auto;
@@ -75,7 +74,7 @@
             padding: 10px;
             border: none;
         }
-
+        
         input[type="button"] {
             padding: 15px;
             background: violet;
@@ -83,45 +82,43 @@
             color: white;
             text-transform: uppercase;
         }
-
+        
         input[type="number"] {
             width: 50%;
             padding: 5px;
             margin-left: 40%;
         }
-
+        
         input:not(:focus) {
             border: 2px solid #f3f3f3;
         }
-
+        
         small {
             padding-left: 12%;
             font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif
         }
-
+        
         .zoom {
             position: absolute;
             top: 20px;
             right: 10px;
             width: 60px;
         }
-
+        
         #zoom_out {
             right: 70px;
         }
-
+        
         .side_nav {
             text-align: center;
             width: 3%;
             min-width: 50px;
-
             position: relative;
             float: left;
-
             background: rgb(68, 68, 80);
             min-height: 100%;
         }
-
+        
         .side_bar textarea {
             display: block;
             width: 80%;
@@ -130,26 +127,26 @@
             max-width: 90%;
             min-width: 80%;
         }
-
+        
         nav {
             width: 100%;
             list-style-type: none;
             text-align: right;
             background: rgb(68, 68, 80);
         }
-
+        
         nav li {
             display: inline-block;
             padding: 10px;
             background: violet;
             color: white;
         }
-
+        
         nav li:hover {
             background: pink;
             cursor: pointer;
         }
-
+        
         #tool_bar {
             list-style-type: none;
             width: 100%;
@@ -157,27 +154,27 @@
             position: relative;
             top: -5px;
         }
-
+        
         #tool_bar li {
             max-width: 100%;
             margin-top: 5px;
         }
-
+        
         #tool_bar li i {
             background: rgb(255, 255, 255);
             padding: 15px;
             border-radius: 2px;
         }
-
+        
         #tool_bar li i:hover {
             background: rgb(114, 103, 103);
             cursor: pointer;
         }
-
+        
         #tool_bar li i.active {
             background: rgb(248, 171, 5);
         }
-
+        
         #selectedTexture {
             position: relative;
             width: 90%;
@@ -186,21 +183,20 @@
             min-height: 50px;
             border: 2px solid white;
         }
-
+        
         #settings {
             margin-top: 10px;
             max-width: 100%;
         }
-
+        
         #selected_tile_container {
             min-height: 200px;
             min-width: 95%;
-
             background: #443e3e;
             overflow: auto;
             border: 2px solid #810e0e;
         }
-
+        
         #selected_tile_container .tile_texture {
             background: #c02e2e;
             width: 100%;
@@ -211,13 +207,13 @@
             text-align: center;
             line-height: 60px;
         }
-
+        
         #selected_tile_container .tile_texture img {
             height: 100%;
             min-height: 100%;
             float: left;
         }
-
+        
         #selected_tile_container .tile_texture .layer_name {
             margin-left: 2px;
             color: white;
@@ -248,8 +244,7 @@
                 </li>
             </ul>
             <ul id="tiles_list"></ul>
-            <img id="selectedTexture" src="https://ak5.picdn.net/shutterstock/videos/559285/thumb/1.jpg?i10c=img.resize(height:160)"
-            />
+            <img id="selectedTexture" src="https://ak5.picdn.net/shutterstock/videos/559285/thumb/1.jpg?i10c=img.resize(height:160)" />
         </div>
         <div class="main_section">
             <canvas id="map_canvas"></canvas>
@@ -293,7 +288,7 @@
                 <small>Map data:</small>
                 <textarea id="map_data" disabled>
 
-            </textarea>
+                </textarea>
                 <input type="button" value="Generate map data" id="generate_map_data" onclick="generate_map_data();" />
                 <div>
                 </div>
@@ -317,7 +312,8 @@
                 currentTextureID = 0,
                 toPanX = 0,
                 toPanY = 0,
-                fc = 0;
+                fc = 0,
+                selectedTile = null;
 
             function set_cursor(text) {
                 var canvas = document.createElement("canvas");
@@ -336,8 +332,8 @@
 
             const toolBarIcons = document.querySelectorAll('#tool_bar li i');
             for (let i = 0; i < toolBarIcons.length; i++) {
-                toolBarIcons[i].onclick = function (event) {
-                    toolBarIcons.forEach(function (icon) {
+                toolBarIcons[i].onclick = function(event) {
+                    toolBarIcons.forEach(function(icon) {
                         icon.classList.remove('active');
                     })
                     this.classList.add('active');
@@ -347,7 +343,7 @@
 
             set_cursor('\uf040');
 
-            document.getElementById('selectedTexture').onclick = function () {
+            document.getElementById('selectedTexture').onclick = function() {
                 //display a dialog
             }
 
@@ -385,8 +381,9 @@
                 if (!map.length && mouseDownEvent) {
                     alert('Please generate a map before attempting to use the canvas area.');
                     mouseDownEvent = null;
-                } else if (map.length && canvasX >= Math.abs(mapOffsetX) && canvasX <= (map.length * tWidth * scale) - mapOffsetX
-                    && canvasY >= Math.abs(mapOffsetY) && canvasY < (map[0].length * tHeight * scale) - mapOffsetY) {
+                } else if (map.length && canvasX >= Math.abs(mapOffsetX) && canvasX <= (map.length * tWidth * scale) -
+                    mapOffsetX &&
+                    canvasY >= Math.abs(mapOffsetY) && canvasY < (map[0].length * tHeight * scale) - mapOffsetY) {
 
                     //Coordinates for the selected grid tile
                     const aX = Math.floor((canvasX + mapOffsetX) / (64 * scale));
@@ -441,21 +438,29 @@
                             break;
                         case 'select_tool':
                             set_cursor('\uf25a');
+
                             if (!mouseDownEvent) {
                                 return;
                             }
+
+                            const selectedTileContainer = document.getElementById('selected_tile_container');
                             const selected = map[aX][aY];
+                            selectedTile = {
+                                x: aX,
+                                y: aY
+                            };
 
                             if (!selected) {
-
+                                selectedTileContainer.innerHTML = "";
+                                console.log('setting inner html to nothing')
                                 return;
                             }
-                            const selectedTileContainer = document.getElementById('selected_tile_container');
+
                             selectedTileContainer.innerHTML = "";
 
                             const asArray = Array.isArray(selected) ? selected : [selected];
 
-                            asArray.forEach(function (tile) {
+                            asArray.forEach(function(tile) {
                                 const div = document.createElement('div');
                                 div.classList.add('tile_texture');
                                 const img = document.createElement('img');
@@ -499,6 +504,7 @@
             }
 
             let lt = Date.now();
+
             function update() {
                 requestAnimationFrame(update);
                 const ct = Date.now();
@@ -518,15 +524,24 @@
                 for (let i = 0; i < map.length; i++) {
                     for (let j = 0; j < map[i].length; j++) {
                         ctx.strokeStyle = document.getElementById('grid_color').value || 'orange';
+
                         if (!map[i][j]) {
-                            ctx.strokeRect((i * tWidth * scale) - mapOffsetX, (j * tHeight * scale) - mapOffsetY, tWidth * scale, tHeight * scale);
+                            ctx.strokeRect((i * tWidth * scale) - mapOffsetX, (j * tHeight * scale) - mapOffsetY,
+                                tWidth * scale, tHeight * scale);
                         } else {
                             const arr = !Array.isArray(map[i][j]) ? [map[i][j]] : map[i][j];
                             for (let k = 0; k < arr.length; k++) {
                                 if (arr[k].image) {
-                                    ctx.drawImage(arr[k].image, (i * tWidth * scale) - mapOffsetX, (j * tHeight * scale) - mapOffsetY, tWidth * scale, tHeight * scale)
+                                    ctx.drawImage(arr[k].image, (i * tWidth * scale) - mapOffsetX, (j * tHeight * scale) -
+                                        mapOffsetY, tWidth * scale, tHeight * scale)
                                 }
                             }
+                        }
+
+                        if (selectedTile && selectedTile.x == i && selectedTile.y == j) {
+                            ctx.strokeStyle = 'red';
+                            ctx.strokeRect((i * tWidth * scale) - mapOffsetX, (j * tHeight * scale) - mapOffsetY,
+                                tWidth * scale, tHeight * scale);
                         }
                     }
                 }
@@ -534,7 +549,7 @@
 
             function read_image_url(event) {
                 var reader = new FileReader();
-                reader.onload = function () {
+                reader.onload = function() {
                     document.getElementById('add_tile_image').setAttribute('data-file-target', reader.result);
                 };
                 reader.readAsDataURL(event.target.files[0])
@@ -608,7 +623,7 @@
                     id: currentTextureID,
                     image: imgElement
                 }
-                imgElement.onclick = function (event) {
+                imgElement.onclick = function(event) {
                     const eles = document.querySelectorAll('#tiles_list li img');
                     for (let i = 0; i < eles.length; i++) {
                         eles[i].style.border = 'none';
@@ -641,7 +656,9 @@
                 object_to_serialize.textures = imgs;
                 const serializedObj = JSON.stringify(object_to_serialize);
                 var a = document.createElement("a");
-                var file = new Blob([serializedObj], { type: 'application/json' });
+                var file = new Blob([serializedObj], {
+                    type: 'application/json'
+                });
                 a.href = URL.createObjectURL(file);
                 a.download = 'map';
                 a.click();
@@ -652,7 +669,7 @@
                 const input = document.createElement('input');
                 input.type = 'file';
                 input.accept = 'application/json';
-                input.onchange = function (event) {
+                input.onchange = function(event) {
                     const reader = new FileReader();
                     reader.onload = parse_map_json;
                     reader.readAsText(event.target.files[0])
@@ -705,7 +722,8 @@
                     return;
                 }
 
-                if (!json.map || !json.textures || json.tWidth == null || isNaN(json.tWidth) || json.tHeight == null || isNaN(json.tHeight)) {
+                if (!json.map || !json.textures || json.tWidth == null || isNaN(json.tWidth) || json.tHeight == null ||
+                    isNaN(json.tHeight)) {
                     alert('Invalid json file format');
                     return;
                 }
@@ -719,7 +737,7 @@
                     img.src = textures[key];
                     img.setAttribute('data-id', key);
                     li.appendChild(img);
-                    img.onclick = function (event) {
+                    img.onclick = function(event) {
                         const eles = document.querySelectorAll('#tiles_list li img');
                         for (let i = 0; i < eles.length; i++) {
                             eles[i].style.border = 'none';
