@@ -3,6 +3,7 @@
 <head>
     <title>Map builder</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.11/handlebars.js"></script>
     <meta charset="UTF-8">
     <meta name="description" content="Online 2D tile map builder">
     <meta name="keywords" content="Online,2D,Tile,Map,Builder,Sprites,Texture,Generator,Free,Javascript">
@@ -104,7 +105,7 @@
         }
         
         #zoom_out {
-            right: 70px;
+            right: 75px;
         }
         
         .side_nav {
@@ -226,7 +227,7 @@
             color: white;
         }
         
-        #selectedTextureDialog {
+        #dialog {
             color: white;
             min-width: 30%;
             min-height: 50%;
@@ -240,30 +241,30 @@
             box-shadow: 0px 8px 16px 10px rgba(8, 5, 5, 0.2);
         }
         
-        #selectedTextureDialog::before,
-        #selectedTextureDialog::after {
+        #dialog::before,
+        #dialog::after {
             content: "";
             display: table;
             clear: both;
         }
         
-        #selectedTextureDialog .textures_display {
+        #dialog .textures_display {
             width: 55%;
             float: left;
         }
         
-        #selectedTextureDialog .content {
+        #dialog #dialog_content {
             margin-top: 2%;
             padding: 10px;
         }
         
-        #selectedTextureDialog .textures_diplay_side {
+        #dialog .textures_diplay_side {
             width: 40%;
             max-width: 40%;
             float: right;
         }
         
-        #selectedTextureDialog .top_bar {
+        #dialog .top_bar {
             text-align: center;
             width: 100%;
             min-width: 100%;
@@ -271,7 +272,7 @@
             padding: 5px 0px;
         }
         
-        #selectedTextureDialog #close {
+        #dialog #close {
             text-align: center;
             position: absolute;
             min-height: 20px;
@@ -366,17 +367,23 @@
                 <div class="dropdown">
                     <button class="dropbtn">File</button>
                     <div class="dropdown-content">
-                        <a href="#">Link 1</a>
-                        <a href="#">Link 2</a>
-                        <a href="#">Link 3</a>
+                        <a href="#">New grid</a>
+                        <a href="#">Resize grid</a>
+                        <a href="#">Settings</a>
+                        <a href="#">Save map</a>
+                        <a href="#">Load map</a>
                     </div>
                 </div>
                 <div class="dropdown">
-                    <button class="dropbtn">About</button>
+                    <button class="dropbtn">Insert</button>
                     <div class="dropdown-content">
-                        <a href="#">Link 1</a>
-                        <a href="#">Link 2</a>
-                        <a href="#">Link 3</a>
+                        <a href="#">Background Image</a>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <button class="dropbtn">Help</button>
+                    <div class="dropdown-content">
+                        <a href="#">Help</a>
                     </div>
                 </div>
             </div>
@@ -425,26 +432,39 @@
             </textarea>
             <input type="button" id="generate_map_data" value="Generate data" />
         </div>
-        <div id="selectedTextureDialog">
-            <div class="top_bar">
-                Select texture
-                <div id="close">X</div>
-            </div>
-            <div class="content">
-                <div class="textures_display">
-                    <h5>Select texture:</h5>
-                    <hr><br>
-                    <ul id="tiles_list">
+        <div id="dialog_container"></div>
 
-                    </ul>
+        <!-- Empty dialog, insert into content-->
+        <script id="blank_dialog" type="text/x-handlebars-template">
+            <div id="dialog">
+                <div class="top_bar">{{title}}
+                    <div id="close">X</div>
                 </div>
-                <div class="textures_diplay_side">
-                    <input id="image" type="file" accept="image/*" />
-                    <input type="button" value="Add tile sprite" id="add_tile_image" />
-                    <input type="button" value="Add tile map" id="add_tile_map" />
+                <div id="dialog_content">
                 </div>
             </div>
-        </div>
+        </script>
+
+        <!-- Textures dialog -->
+        <script id="textures_dialog" type="text/x-handlebars-template">
+            <div class="textures_display">
+                <h5>Select texture:</h5>
+                <hr><br>
+                <ul id="tiles_list">
+
+                </ul>
+            </div>
+            <div class="textures_diplay_side">
+                <input id="image" type="file" accept="image/*" />
+                <input type="button" value="Add tile sprite" id="add_tile_image" />
+                <input type="button" value="Add tile map" id="add_tile_map" />
+            </div>
+        </script>
+
+        <!-- New grid dialog -->
+        <script id="new_grid_dialog" type="text/x-handlebars-template">
+
+        </script>
     </div>
     <script>
         const map_canvas = document.getElementById('map_canvas'),
@@ -481,6 +501,14 @@
             map_canvas.style.cursor = `url(${dataURL}),auto`;
         }
 
+        function showDialog(contentTemplateId, input) {
+            const source = document.getElementById("blank_dialog").innerHTML;
+            const template = Handlebars.compile(source);
+            const out = template(input);
+            document.getElementById('dialog_container').innerHTML = out;
+            const content = document.getElementById('dialog_content');
+        }
+
 
         const toolBarIcons = document.querySelectorAll('#tool_bar li i');
         for (let i = 0; i < toolBarIcons.length; i++) {
@@ -496,20 +524,20 @@
         // set_cursor('\uf040');
 
         document.getElementById('close').onclick = function() {
-            selectedTextureDialog.style.display = 'none';
+            dialog.style.display = 'none';
         };
 
         document.getElementById('selectedTexture').onclick = function() {
-            selectedTextureDialog.style.display = 'block';
+            dialog.style.display = 'block';
         }
 
 
-        document.getElementById('selectedTextureDialog').addEventListener('mousedown', mouseDown, false);
+        document.getElementById('dialog').addEventListener('mousedown', mouseDown, false);
 
         window.addEventListener('mouseup', mouseUp, false);
 
         map_canvas.addEventListener('click', function() {
-            selectedTextureDialog.style.display = 'none';
+            dialog.style.display = 'none';
         })
 
         function mouseUp() {
@@ -521,7 +549,7 @@
         }
 
         function divMove(e) {
-            var div = document.getElementById('selectedTextureDialog');
+            var div = document.getElementById('dialog');
             div.style.position = 'absolute';
             div.style.top = e.clientY + 'px';
             div.style.left = e.clientX + 'px';
@@ -699,7 +727,7 @@
             mapOffsetY += toPanY / currentFPS;
             fc++;
             ctx.clearRect(0, 0, map_canvas.width, map_canvas.height);
-            ctx.fillStyle = document.getElementById('canvas_fill').value || '#F3F3F3';
+            // ctx.fillStyle = document.getElementById('canvas_fill').value || '#F3F3F3';
             ctx.fillRect(0, 0, map_canvas.width, map_canvas.height);
             for (let i = 0; i < map.length; i++) {
                 for (let j = 0; j < map[i].length; j++) {
