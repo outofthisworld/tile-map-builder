@@ -92,7 +92,7 @@
         }
         
         small {
-            padding-left: 12%;
+            padding-left: 20px;
             font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif
         }
         
@@ -416,6 +416,9 @@
                 <li>
                     <i id="select_tool" class="fa fa-hand-pointer-o"></i>
                 </li>
+                <li>
+                    <i id="multi_select_tool" class=" fa fa-hand-stop-o"></i>
+                </li>
             </ul>
 
             <img id="selectedTexture" src="https://opengameart.org/sites/default/files/Transparency500.png" />
@@ -427,11 +430,7 @@
         </div>
         <div class="options">
             <small>Selected tile layers:</small>
-
             <div id="selected_tile_container">
-                <!--<div class="tile_texture">
-                    <img src="https://ak5.picdn.net/shutterstock/videos/559285/thumb/1.jpg?i10c=img.resize(height:160)"/><span class="layer_name">hello</span>
-                </div>-->
 
             </div>
             <br>
@@ -482,6 +481,13 @@
             <input type="number" min="1" id="tile_height" />
             <input type="button" id="create_grid" value="Create grid" />
         </script>
+
+        <script id="tile_layer_template" type="text/x-handlebars-template">
+            <div class="tile_texture">
+                <img src="https://ak5.picdn.net/shutterstock/videos/559285/thumb/1.jpg?i10c=img.resize(height:160)" /><span class="layer_name">hello</span>
+                <i class=" fa fa-trash-o"></i>
+            </div>
+        </script>
     </div>
     <script>
         const map_canvas = document.getElementById('map_canvas'),
@@ -502,7 +508,8 @@
             toPanX = 0,
             toPanY = 0,
             fc = 0,
-            selectedTile = null;
+            selectedTile = null,
+            mouseDownStarted = false;
 
         function set_cursor(text) {
             var canvas = document.createElement("canvas");
@@ -553,6 +560,10 @@
             dialog.style.display = 'block';
         }
 
+        function closeOpenDialog() {
+            const dialog = document.getElementById('dialog');
+            dialog.style.display = 'none';
+        }
 
         const toolBarIcons = document.querySelectorAll('#tool_bar li i');
         for (let i = 0; i < toolBarIcons.length; i++) {
@@ -582,7 +593,7 @@
             showDialog('new_grid_dialog', {
                 title: 'Create new grid'
             });
-            document.getElementById('create_grid').addEventListener('click', generate_map, true);
+            document.getElementById('create_grid').onclick = generate_map;
         }
 
         function zoom_in(event) {
@@ -683,18 +694,17 @@
 
                         const selectedTileContainer = document.getElementById('selected_tile_container');
                         const selected = map[aX][aY];
-                        selectedTile = {
-                            x: aX,
-                            y: aY
-                        };
+
+                        selectedTileContainer.innerHTML = "";
 
                         if (!selected) {
-                            selectedTileContainer.innerHTML = "";
-                            console.log('setting inner html to nothing')
                             return;
                         }
 
-                        selectedTileContainer.innerHTML = "";
+                        selectedTile = [{
+                            x: aX,
+                            y: aY
+                        }];
 
                         const asArray = Array.isArray(selected) ? selected : [selected];
 
@@ -709,6 +719,33 @@
                             div.appendChild(span);
                             selectedTileContainer.appendChild(div);
                         })
+                        break;
+                    case 'multi_select_tool':
+                        set_cursor('\uf256');
+
+                        if (!mouseDownEvent) {
+                            mouseDownStarted = false;
+                            return;
+                        }
+
+                        const selectedTileContainerr = document.getElementById('selected_tile_container');
+                        const selectedd = map[aX][aY];
+
+                        selectedTileContainerr.innerHTML = "";
+
+                        if (!selectedd) {
+                            return;
+                        }
+
+                        if (!mouseDownStarted) {
+                            selectedTile = [];
+                            mouseDownStarted = !mouseDownStarted;
+                        }
+
+                        selectedTile[selectTile.length] = {
+                            x: aX,
+                            y: aY
+                        }
                         break;
                 }
             } else {
@@ -762,7 +799,8 @@
             ctx.fillRect(0, 0, map_canvas.width, map_canvas.height);
             for (let i = 0; i < map.length; i++) {
                 for (let j = 0; j < map[i].length; j++) {
-                    ctx.strokeStyle = document.getElementById('grid_color').value || 'orange';
+                    // document.getElementById('grid_color').value
+                    ctx.strokeStyle = 'orange';
 
                     if (!map[i][j]) {
                         ctx.strokeRect((i * tWidth * scale) - mapOffsetX, (j * tHeight * scale) - mapOffsetY,
@@ -777,10 +815,14 @@
                         }
                     }
 
-                    if (selectedTile && selectedTile.x == i && selectedTile.y == j) {
-                        ctx.strokeStyle = 'red';
-                        ctx.strokeRect((i * tWidth * scale) - mapOffsetX, (j * tHeight * scale) - mapOffsetY,
-                            tWidth * scale, tHeight * scale);
+                    if (selectedTile) {
+                        for (let p = 0; p < selectedTile.length; p++) {
+                            if (selectedTile[p].x == i && selectedTile[p].y == j) {
+                                ctx.strokeStyle = 'red';
+                                ctx.strokeRect((i * tWidth * scale) - mapOffsetX, (j * tHeight * scale) - mapOffsetY,
+                                    tWidth * scale, tHeight * scale);
+                            }
+                        }
                     }
                 }
             }
@@ -797,27 +839,32 @@
         }
 
         function generate_map(event) {
+            console.log('generating map')
             const tilesX = document.getElementById('map_size_tiles_x').value;
             const tilesY = document.getElementById('map_size_tiles_y').value;
             const tileWidth = document.getElementById('tile_width').value;
             const tileHeight = document.getElementById('tile_height').value;
 
+
             const errors = [];
-            if (isNaN(tilesX) || parseInt(tilesX) <= 0) {
+
+            if (!tilesX || isNaN(tilesX) || parseInt(tilesX) <= 0) {
                 errors[errors.length] = 'Map x tiles must be above 0';
             }
-            if (isNaN(tilesY) || parseInt(tilesY) <= 0) {
+            if (!tilesY || isNaN(tilesY) || parseInt(tilesY) <= 0) {
                 errors[errors.length] = 'Map y tiles must be above 0';
             }
-            if (isNaN(tileWidth) || parseInt(tileWidth) <= 0) {
+            if (!tileWidth || isNaN(tileWidth) || parseInt(tileWidth) <= 0) {
                 errors[errors.length] = 'tile width must be above 0';
             }
-            if (isNaN(tileHeight) || parseInt(tileHeight) <= 0) {
+            if (!tileHeight || isNaN(tileHeight) || parseInt(tileHeight) <= 0) {
                 errors[errors.length] = 'tile height must be above 0';
             }
+            console.log(errors)
 
-            if (errors.length > 0) {
-                alert(errors.join(':'));
+            if (errors.length) {
+                console.log('errors')
+                alert(errors.join('\n'));
                 return;
             }
 
@@ -841,6 +888,11 @@
             tWidth = tileWidth;
             tHeight = tileHeight;
             map = newmap;
+            tilesX.value = "";
+            tilesY.value = "";
+            tileWidth.value = "";
+            tileHeight.value = "";
+            closeOpenDialog();
         }
 
         function add_tile_map(event) {
