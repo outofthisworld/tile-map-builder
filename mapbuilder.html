@@ -1,9 +1,13 @@
-<html>
+<html lang="en-US">
 
 <head>
-
     <title>Map builder</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <meta charset="UTF-8">
+    <meta name="description" content="Online 2D tile map builder">
+    <meta name="keywords" content="Online,2D,Tile,Map,Builder,Sprites,Texture,Generator,Free,Javascript">
+    <meta name="author" content="Tile map builder">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         * {
             margin: 0px;
@@ -66,29 +70,25 @@
         }
         
         input {
+            font-size: 16px;
             display: block;
             margin: 5px auto;
-            width: 80%;
+            width: 90%;
             padding: 10px;
             border: none;
         }
         
         input[type="button"] {
             padding: 15px;
-            background: #c02e2e;
+            background-color: #3e8e41;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: white;
-            text-transform: uppercase;
         }
         
         input[type="number"] {
             width: 50%;
             padding: 5px;
             margin-left: 40%;
-        }
-        
-        input:not(:focus) {
-            border: 2px solid #f3f3f3;
         }
         
         small {
@@ -117,9 +117,9 @@
             min-height: 100%;
         }
         
-        .side_bar textarea {
+        textarea {
             display: block;
-            width: 80%;
+            width: 90%;
             margin: 0 auto;
             min-height: 150px;
             max-width: 90%;
@@ -142,11 +142,11 @@
             padding: 10px 20px;
             color: rgb(255, 255, 255);
             border-radius: 5px;
-            background: #c02e2e;
+            background-color: #3e8e41;
         }
         
         nav li:hover {
-            background: rgb(209, 12, 51);
+            background-color: #2fe736;
             color: white;
             cursor: pointer;
         }
@@ -171,13 +171,13 @@
         }
         
         #tool_bar li i:hover {
-            background: rgb(43, 33, 35);
+            background-color: #3e8e41;
             cursor: pointer;
         }
         
         #tool_bar li i.active {
             color: white;
-            background: #c02e2e;
+            background-color: #3e8e41;
             border: 1px solid white;
         }
         
@@ -197,14 +197,15 @@
         
         #selected_tile_container {
             min-height: 200px;
-            min-width: 100%;
+            width: 90%;
+            margin: 0 auto;
             background: rgb(43, 33, 35);
             overflow: auto;
-            border: 2px solid #810e0e;
+            border: 2px solid #3e8e41;
         }
         
         #selected_tile_container .tile_texture {
-            background: #c02e2e;
+            background-color: #3e8e41;
             width: 100%;
             min-width: 100%;
             min-height: 64px;
@@ -235,9 +236,8 @@
             top: 25%;
             left: 30%;
             background: rgb(43, 33, 35);
-            border: 2px solid rgb(163, 29, 29);
-            padding: 10px;
             display: none;
+            box-shadow: 0px 8px 16px 10px rgba(8, 5, 5, 0.2);
         }
         
         #selectedTextureDialog::before,
@@ -248,24 +248,27 @@
         }
         
         #selectedTextureDialog .textures_display {
-            width: 65%;
+            width: 55%;
             float: left;
         }
         
         #selectedTextureDialog .content {
             margin-top: 2%;
+            padding: 10px;
         }
         
         #selectedTextureDialog .textures_diplay_side {
-            width: 30%;
-            max-width: 30%;
+            width: 40%;
+            max-width: 40%;
             float: right;
         }
         
         #selectedTextureDialog .top_bar {
+            text-align: center;
             width: 100%;
             min-width: 100%;
-            background: white;
+            background: rgb(51, 42, 42);
+            padding: 5px 0px;
         }
         
         #selectedTextureDialog #close {
@@ -273,8 +276,8 @@
             position: absolute;
             min-height: 20px;
             min-width: 20px;
-            right: 0px;
-            top: 0px;
+            right: 5px;
+            top: 5px;
             color: black;
             background: rgb(245, 245, 243);
         }
@@ -283,60 +286,100 @@
             padding: 5px;
         }
         
-        nav .appNavLinks {
-            margin-left: 57px;
+        nav#appNav .nav_inner {
             display: inline-block;
-            position: relative;
+            margin-left: 57px;
         }
         
-        nav .appNavLinks .menu {
+        nav#appNav .nav_inner ul.menu {
             display: none;
-            position: relative;
-            border-radius: 5px;
         }
         
-        nav .appNavLinks .menu ul li {
-            display: block;
-            width: 80%;
-            margin-top: 2px;
-        }
-        
-        .appNavLinks li:hover~.menu {
+        nav#appNav .nav_inner li:hover ul.menu,
+        ul.menu:hover {
             position: absolute;
             display: block;
-            min-width: 170px;
-            min-height: 100px;
-            background: rgb(25, 25, 31);
-            padding: 20px;
+            height: 200px;
+            width: 50px;
+        }
+        /* Dropdown Button */
+        
+        .dropbtn {
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 16px;
+            border: none;
+            cursor: pointer;
+        }
+        /* The container <div> - needed to position the dropdown content */
+        
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        /* Dropdown Content (Hidden by Default) */
+        
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+        }
+        /* Links inside the dropdown */
+        
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+        /* Change color of dropdown links on hover */
+        
+        .dropdown-content a:hover {
+            background-color: #f1f1f1
+        }
+        /* Show the dropdown menu on hover */
+        
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+        /* Change the background color of the dropdown button when the dropdown content is shown */
+        
+        .dropdown:hover .dropbtn {
+            background-color: #3e8e41;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
+        <noscript>
+            <div style="border: 3px solid rgb(255, 0, 43); padding: 20px;background: rgb(25, 25, 31);">
+                <span style="color:red">It appears you don't have javascript enabled, this tool will not function without it! Sorry.</span>
+            </div>
+        </noscript>
         <nav id="appNav">
-            <ul class="appNavLinks">
-                <li>
-                    File
-                    <div class="menu">
-                        <ul>
-                            <li>Menu item one</li>
-                            <li>Menu item one</li>
-                            <li>Menu item one</li>
-                        </ul>
+            <div class="nav_inner">
+                <div class="dropdown">
+                    <button class="dropbtn">File</button>
+                    <div class="dropdown-content">
+                        <a href="#">Link 1</a>
+                        <a href="#">Link 2</a>
+                        <a href="#">Link 3</a>
                     </div>
-                </li>
-                <li>
-                    File
-                    <div class="menu">
-                        <ul>
-                            <li>Menu item one</li>
-                            <li>Menu item one</li>
-                            <li>Menu item one</li>
-                        </ul>
+                </div>
+                <div class="dropdown">
+                    <button class="dropbtn">About</button>
+                    <div class="dropdown-content">
+                        <a href="#">Link 1</a>
+                        <a href="#">Link 2</a>
+                        <a href="#">Link 3</a>
                     </div>
-                </li>
-            </ul>
+                </div>
+            </div>
             <div class="right">
                 <li id="save_map">
                     Save
@@ -375,9 +418,16 @@
                 </div>-->
 
             </div>
+            <br>
+            <small>Map data</small>
+            <textarea id="map_data" disabled>
+                
+            </textarea>
+            <input type="button" id="generate_map_data" value="Generate data" />
         </div>
         <div id="selectedTextureDialog">
             <div class="top_bar">
+                Select texture
                 <div id="close">X</div>
             </div>
             <div class="content">
@@ -453,13 +503,14 @@
             selectedTextureDialog.style.display = 'block';
         }
 
-        window.onload = addListeners;
 
-        function addListeners() {
-            document.getElementById('selectedTextureDialog').addEventListener('mousedown', mouseDown, false);
-            window.addEventListener('mouseup', mouseUp, false);
+        document.getElementById('selectedTextureDialog').addEventListener('mousedown', mouseDown, false);
 
-        }
+        window.addEventListener('mouseup', mouseUp, false);
+
+        map_canvas.addEventListener('click', function() {
+            selectedTextureDialog.style.display = 'none';
+        })
 
         function mouseUp() {
             window.removeEventListener('mousemove', divMove, true);
@@ -988,13 +1039,17 @@
         document.getElementById('zoom_in').onclick = zoom_in;
         window.addEventListener('keydown', handle_window_keydown);
         document.getElementById('image').onchange = read_image_url;
-        document.getElementById('generate_map').onclick = generate_map;
+        //document.getElementById('generate_map').onclick = generate_map;
         document.getElementById('add_tile_image').onclick = add_tile_image;
         document.getElementById('add_tile_map').onclick = add_tile_map;
         document.getElementById('load_map').onclick = load_map;
         document.getElementById('save_map').onclick = save_map;
+        document.getElementById('generate_map_data').onclick = generate_map_data;
         requestAnimationFrame(update);
     </script>
+    <noscript>
+            <META HTTP-EQUIV="Refresh" CONTENT="2;URL=error.html">
+    </noscript>
 </body>
 
 </html>
