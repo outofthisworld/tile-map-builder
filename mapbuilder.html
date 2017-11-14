@@ -81,15 +81,14 @@
         
         input[type="button"] {
             padding: 15px;
+            margin-top: 10px;
             background-color: #3e8e41;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: white;
         }
         
         input[type="number"] {
-            width: 50%;
             padding: 5px;
-            margin-left: 40%;
         }
         
         small {
@@ -254,8 +253,11 @@
         }
         
         #dialog #dialog_content {
-            margin-top: 2%;
+            position: relative;
+            top: 30px;
             padding: 10px;
+            width: 80%;
+            margin: 0 auto;
         }
         
         #dialog .textures_diplay_side {
@@ -352,6 +354,13 @@
         .dropdown:hover .dropbtn {
             background-color: #3e8e41;
         }
+        
+        label {
+            display: inline-block;
+            width: 100%;
+            position: relative;
+            left: 25px;
+        }
     </style>
 </head>
 
@@ -367,7 +376,7 @@
                 <div class="dropdown">
                     <button class="dropbtn">File</button>
                     <div class="dropdown-content">
-                        <a href="#">New grid</a>
+                        <a href="#" id="new_grid">New grid</a>
                         <a href="#">Resize grid</a>
                         <a href="#">Settings</a>
                         <a href="#">Save map</a>
@@ -463,7 +472,15 @@
 
         <!-- New grid dialog -->
         <script id="new_grid_dialog" type="text/x-handlebars-template">
-
+            <label for="map_size_tiles_x">Number of tiles on x axis:</label>
+            <input type="number" min="1" id="map_size_tiles_x" />
+            <label for="map_size_tiles_y">Number of tiles on y axis:</label>
+            <input type="number" min="1" id="map_size_tiles_y" />
+            <label for="tile_width">Tile width (pixels):</label>
+            <input type="number" min="1" id="tile_width" />
+            <label for="tile_height">Tile height (pixels):</label>
+            <input type="number" min="1" id="tile_height" />
+            <input type="button" id="create_grid" value="Create grid" />
         </script>
     </div>
     <script>
@@ -501,12 +518,39 @@
             map_canvas.style.cursor = `url(${dataURL}),auto`;
         }
 
+
         function showDialog(contentTemplateId, input) {
+            const dialogContainer = document.getElementById('dialog_container');
+            dialogContainer.innerHTML = "";
             const source = document.getElementById("blank_dialog").innerHTML;
             const template = Handlebars.compile(source);
             const out = template(input);
-            document.getElementById('dialog_container').innerHTML = out;
+            dialogContainer.innerHTML = out;
             const content = document.getElementById('dialog_content');
+            const contentTemplate = Handlebars.compile(document.getElementById(contentTemplateId).innerHTML);
+            content.innerHTML = contentTemplate(input);
+            const dialog = document.getElementById('dialog');
+            document.getElementById('close').onclick = function() {
+                dialog.style.display = 'none';
+            };
+            map_canvas.addEventListener('click', function() {
+                dialog.style.display = 'none';
+            })
+            dialog.addEventListener('mousedown', function mouseDown(e) {
+                window.addEventListener('mousemove', dragDiv, true);
+            }, false);
+
+            window.addEventListener('mouseup', function mouseUp() {
+                window.removeEventListener('mousemove', dragDiv, true);
+            }, false);
+
+            function dragDiv(e) {
+                var div = document.getElementById('dialog');
+                div.style.position = 'absolute';
+                div.style.top = e.clientY + 'px';
+                div.style.left = e.clientX + 'px';
+            }
+            dialog.style.display = 'block';
         }
 
 
@@ -521,38 +565,24 @@
             }
         }
 
-        // set_cursor('\uf040');
+        set_cursor('\uf040');
 
-        document.getElementById('close').onclick = function() {
-            dialog.style.display = 'none';
-        };
+
 
         document.getElementById('selectedTexture').onclick = function() {
-            dialog.style.display = 'block';
+            showDialog('textures_dialog', {
+                title: 'Select or add texture'
+            });
+            document.getElementById('image').onchange = read_image_url;
+            document.getElementById('add_tile_image').onclick = add_tile_image;
+            document.getElementById('add_tile_map').onclick = add_tile_map;
         }
 
-
-        document.getElementById('dialog').addEventListener('mousedown', mouseDown, false);
-
-        window.addEventListener('mouseup', mouseUp, false);
-
-        map_canvas.addEventListener('click', function() {
-            dialog.style.display = 'none';
-        })
-
-        function mouseUp() {
-            window.removeEventListener('mousemove', divMove, true);
-        }
-
-        function mouseDown(e) {
-            window.addEventListener('mousemove', divMove, true);
-        }
-
-        function divMove(e) {
-            var div = document.getElementById('dialog');
-            div.style.position = 'absolute';
-            div.style.top = e.clientY + 'px';
-            div.style.left = e.clientX + 'px';
+        document.getElementById('new_grid').onclick = function() {
+            showDialog('new_grid_dialog', {
+                title: 'Create new grid'
+            });
+            document.getElementById('create_grid').addEventListener('click', generate_map, true);
         }
 
         function zoom_in(event) {
@@ -727,7 +757,8 @@
             mapOffsetY += toPanY / currentFPS;
             fc++;
             ctx.clearRect(0, 0, map_canvas.width, map_canvas.height);
-            // ctx.fillStyle = document.getElementById('canvas_fill').value || '#F3F3F3';
+            // document.getElementById('canvas_fill').value || 
+            ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(0, 0, map_canvas.width, map_canvas.height);
             for (let i = 0; i < map.length; i++) {
                 for (let j = 0; j < map[i].length; j++) {
@@ -1066,10 +1097,6 @@
         document.getElementById('zoom_out').onclick = zoom_out;
         document.getElementById('zoom_in').onclick = zoom_in;
         window.addEventListener('keydown', handle_window_keydown);
-        document.getElementById('image').onchange = read_image_url;
-        //document.getElementById('generate_map').onclick = generate_map;
-        document.getElementById('add_tile_image').onclick = add_tile_image;
-        document.getElementById('add_tile_map').onclick = add_tile_map;
         document.getElementById('load_map').onclick = load_map;
         document.getElementById('save_map').onclick = save_map;
         document.getElementById('generate_map_data').onclick = generate_map_data;
