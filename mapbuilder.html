@@ -508,7 +508,7 @@
             toPanX = 0,
             toPanY = 0,
             fc = 0,
-            selectedTile = null,
+            selectedTiles = [],
             mouseDownStarted = false;
 
         function set_cursor(text) {
@@ -701,7 +701,7 @@
                             return;
                         }
 
-                        selectedTile = [{
+                        selectedTiles = [{
                             x: aX,
                             y: aY
                         }];
@@ -738,11 +738,12 @@
                         }
 
                         if (!mouseDownStarted) {
-                            selectedTile = [];
+                            selectedTiles = [];
                             mouseDownStarted = !mouseDownStarted;
                         }
 
-                        selectedTile[selectTile.length] = {
+                        selectedTiles = selectedTiles || [];
+                        selectedTiles[selectedTiles.length] = {
                             x: aX,
                             y: aY
                         }
@@ -815,9 +816,9 @@
                         }
                     }
 
-                    if (selectedTile) {
-                        for (let p = 0; p < selectedTile.length; p++) {
-                            if (selectedTile[p].x == i && selectedTile[p].y == j) {
+                    if (selectedTiles) {
+                        for (let p = 0; p < selectedTiles.length; p++) {
+                            if (selectedTiles[p].x == i && selectedTiles[p].y == j) {
                                 ctx.strokeStyle = 'red';
                                 ctx.strokeRect((i * tWidth * scale) - mapOffsetX, (j * tHeight * scale) - mapOffsetY,
                                     tWidth * scale, tHeight * scale);
@@ -896,22 +897,49 @@
         }
 
         function add_tile_map(event) {
+            //Display dialog asking for these values
+            add_tile_image({
+                tsX: 64,
+                tsY: 64
+            });
+        }
+
+        function display_all_textures_in_dom() {
+            if (!loadedTextures) return;
+            for (let i = 0; i < loadedTextures.length; i++) {
+                const texture = loadedTextures[i];
+                add_texture_to_dom({
+                    url: texture,
+                    id: i + 1
+                });
+            }
+        }
+
+        function add_texture_to_dom(obj) {
+            const container = document.getElementById('selected_tile_container');
+            if (!container) return;
+
+            const template = document.getElementById("tile_layer_template");
+            if (!template) return;
+
+            const compiled = Handlebars.compile(template.innerHTML);
+            const out = compiled(obj);
+            container.appendChild(out);
+        }
+
+        function add_tile_image(event) {
             if (!document.getElementById('add_tile_image').hasAttribute('data-file-target')) {
                 alert('Please select a file')
                 return;
             }
             const url = document.getElementById('add_tile_image').getAttribute('data-file-target');
-            const tsX = 64;
-            const tsY = 64;
             const image = document.createElement('img');
 
-
             image.onload = function() {
-
                 const tile_map_width = image.width;
                 const tile_map_height = image.height;
-                const numTilesX = tile_map_width / tsX;
-                const numTilesY = tile_map_height / tsY;
+                const numTilesX = tile_map_width / (event.tsX || tile_map_width);
+                const numTilesY = tile_map_height / (event.tsY || tile_map_height);
 
                 if (numTilesX % 1 > 0 || numTilesY % 1 > 0) {
                     alert('Tile map width & height constraints do not match the input tile image width/height');
@@ -920,85 +948,118 @@
 
                 const canvas = document.createElement('canvas'),
                     ctx = canvas.getContext('2d');
-                canvas.width = tsX;
-                canvas.height = tsY;
-
-                console.log(tile_map_width);
-                console.log(tile_map_height);
-                console.log(numTilesX)
-                console.log(numTilesY)
+                canvas.width = event.tsX || tile_map_width;
+                canvas.height = event.tsY || tile_map_height;
 
                 for (let x = 0; x < numTilesX; x++) {
                     for (let y = 0; y < numTilesY; y++) {
-                        currentTextureID++;
                         ctx.clearRect(0, 0, tile_map_width, tile_map_height);
-                        //console.log('drawing image @ : x ', -x * tsX)
-                        //console.log('drawing image @ : y ', -y * tsY)
-                        ctx.drawImage(image, (x * tsX) * -1, (y * tsY) * -1, tile_map_width, tile_map_height);
+                        ctx.drawImage(image, (x * (event.tsX || tile_map_width)) * -1, (y * (event.tsY || tile_map_height)) * -1, tile_map_width, tile_map_height);
                         var dataURL = canvas.toDataURL('image/png');
-                        console.log(dataURL);
-                        const li = document.createElement('li');
-                        const croppedImage = document.createElement('img');
-                        croppedImage.src = dataURL;
-                        li.classList.add('li');
-                        li.setAttribute('data-id', currentTextureID);
-                        croppedImage.setAttribute('data-id', currentTextureID);
-                        const textureObj = {
-                            id: currentTextureID,
-                            image: croppedImage
-                        }
-                        croppedImage.onclick = function(event) {
-                            const eles = document.querySelectorAll('#tiles_list li img');
-                            for (let i = 0; i < eles.length; i++) {
-                                eles[i].style.border = 'none';
-                            }
-                            croppedImage.style.border = '2px solid red';
-                            selectedTexture = textureObj;
-                        }
-                        li.appendChild(croppedImage);
-                        document.getElementById('tiles_list').appendChild(li);
+                        loadedTextures[loadedTextures.length] = dataURL;
+                        add_texture_to_dom({
+                            url: dataURL,
+                            id: loadedTextures.length
+                        });
                     }
                 }
                 document.getElementById('add_tile_image').removeAttribute('data-file-target');
                 document.getElementById('image').value = '';
             }
+
             image.src = url;
         }
 
-        function add_tile_image(event) {
-            if (!document.getElementById('add_tile_image').hasAttribute('data-file-target')) {
-                alert('Please select a file')
-                return;
-            }
-            currentTextureID++;
-            const url = document.getElementById('add_tile_image').getAttribute('data-file-target');
-            const li = document.createElement('li');
-            const imgElement = document.createElement('img');
-            imgElement.src = url;
 
-            document.getElementById('add_tile_image').removeAttribute('data-file-target');
-
-            //Format list
-            li.classList.add('li');
-            li.setAttribute('data-id', currentTextureID);
-            imgElement.setAttribute('data-id', currentTextureID);
-            const textureObj = {
-                id: currentTextureID,
-                image: imgElement
-            }
-            imgElement.onclick = function(event) {
-                const eles = document.querySelectorAll('#tiles_list li img');
-                for (let i = 0; i < eles.length; i++) {
-                    eles[i].style.border = 'none';
+        var Base64 = {
+            _keyStr: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+            encode: function(e) {
+                var t = "";
+                var n, r, i, s, o, u, a;
+                var f = 0;
+                e = Base64._utf8_encode(e);
+                while (f < e.length) {
+                    n = e.charCodeAt(f++);
+                    r = e.charCodeAt(f++);
+                    i = e.charCodeAt(f++);
+                    s = n >> 2;
+                    o = (n & 3) << 4 | r >> 4;
+                    u = (r & 15) << 2 | i >> 6;
+                    a = i & 63;
+                    if (isNaN(r)) {
+                        u = a = 64
+                    } else if (isNaN(i)) {
+                        a = 64
+                    }
+                    t = t + this._keyStr.charAt(s) + this._keyStr.charAt(o) + this._keyStr.charAt(u) + this._keyStr.charAt(a)
                 }
-                imgElement.style.border = '2px solid red';
-                selectedTexture = textureObj;
+                return t
+            },
+            decode: function(e) {
+                var t = "";
+                var n, r, i;
+                var s, o, u, a;
+                var f = 0;
+                e = e.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+                while (f < e.length) {
+                    s = this._keyStr.indexOf(e.charAt(f++));
+                    o = this._keyStr.indexOf(e.charAt(f++));
+                    u = this._keyStr.indexOf(e.charAt(f++));
+                    a = this._keyStr.indexOf(e.charAt(f++));
+                    n = s << 2 | o >> 4;
+                    r = (o & 15) << 4 | u >> 2;
+                    i = (u & 3) << 6 | a;
+                    t = t + String.fromCharCode(n);
+                    if (u != 64) {
+                        t = t + String.fromCharCode(r)
+                    }
+                    if (a != 64) {
+                        t = t + String.fromCharCode(i)
+                    }
+                }
+                t = Base64._utf8_decode(t);
+                return t
+            },
+            _utf8_encode: function(e) {
+                e = e.replace(/\r\n/g, "\n");
+                var t = "";
+                for (var n = 0; n < e.length; n++) {
+                    var r = e.charCodeAt(n);
+                    if (r < 128) {
+                        t += String.fromCharCode(r)
+                    } else if (r > 127 && r < 2048) {
+                        t += String.fromCharCode(r >> 6 | 192);
+                        t += String.fromCharCode(r & 63 | 128)
+                    } else {
+                        t += String.fromCharCode(r >> 12 | 224);
+                        t += String.fromCharCode(r >> 6 & 63 | 128);
+                        t += String.fromCharCode(r & 63 | 128)
+                    }
+                }
+                return t
+            },
+            _utf8_decode: function(e) {
+                var t = "";
+                var n = 0;
+                var r = c1 = c2 = 0;
+                while (n < e.length) {
+                    r = e.charCodeAt(n);
+                    if (r < 128) {
+                        t += String.fromCharCode(r);
+                        n++
+                    } else if (r > 191 && r < 224) {
+                        c2 = e.charCodeAt(n + 1);
+                        t += String.fromCharCode((r & 31) << 6 | c2 & 63);
+                        n += 2
+                    } else {
+                        c2 = e.charCodeAt(n + 1);
+                        c3 = e.charCodeAt(n + 2);
+                        t += String.fromCharCode((r & 15) << 12 | (c2 & 63) << 6 | c3 & 63);
+                        n += 3
+                    }
+                }
+                return t
             }
-            li.appendChild(imgElement);
-            document.getElementById('tiles_list').appendChild(li);
-
-            //Reset
-            document.getElementById('image').value = '';
         }
 
         function save_map(event) {
@@ -1018,12 +1079,13 @@
             object_to_serialize.map = map;
             object_to_serialize.textures = imgs;
             const serializedObj = JSON.stringify(object_to_serialize);
+            var encodedString = Base64.encode(serializedObj);
             var a = document.createElement("a");
-            var file = new Blob([serializedObj], {
-                type: 'application/json'
+            var file = new Blob([encodedString], {
+                type: 'application/octet-stream'
             });
             a.href = URL.createObjectURL(file);
-            a.download = 'map';
+            a.download = 'map.tb';
             a.click();
         }
 
@@ -1031,7 +1093,7 @@
         function load_map(event) {
             const input = document.createElement('input');
             input.type = 'file';
-            input.accept = 'application/json';
+            input.accept = '.tb';
             input.onchange = function(event) {
                 const reader = new FileReader();
                 reader.onload = function() {
@@ -1078,7 +1140,7 @@
 
 
         function parse_map_json(json) {
-
+            json = Base64.decode(json);
             try {
                 json = JSON.parse(json);
             } catch (err) {
