@@ -3,16 +3,113 @@
 <head>
     <title>Map builder</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/foundation-icons/3.0/foundation-icons.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.11/handlebars.js"></script>
     <meta charset="UTF-8">
     <meta name="description" content="Online 2D tile map builder">
     <meta name="keywords" content="Online,2D,Tile,Map,Builder,Sprites,Texture,Generator,Free,Javascript">
     <meta name="author" content="Tile map builder">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        var Base64 = {
+            _keyStr: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+            encode: function(e) {
+                var t = "";
+                var n, r, i, s, o, u, a;
+                var f = 0;
+                e = Base64._utf8_encode(e);
+                while (f < e.length) {
+                    n = e.charCodeAt(f++);
+                    r = e.charCodeAt(f++);
+                    i = e.charCodeAt(f++);
+                    s = n >> 2;
+                    o = (n & 3) << 4 | r >> 4;
+                    u = (r & 15) << 2 | i >> 6;
+                    a = i & 63;
+                    if (isNaN(r)) {
+                        u = a = 64
+                    } else if (isNaN(i)) {
+                        a = 64
+                    }
+                    t = t + this._keyStr.charAt(s) + this._keyStr.charAt(o) + this._keyStr.charAt(u) + this._keyStr.charAt(a)
+                }
+                return t
+            },
+            decode: function(e) {
+                var t = "";
+                var n, r, i;
+                var s, o, u, a;
+                var f = 0;
+                e = e.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+                while (f < e.length) {
+                    s = this._keyStr.indexOf(e.charAt(f++));
+                    o = this._keyStr.indexOf(e.charAt(f++));
+                    u = this._keyStr.indexOf(e.charAt(f++));
+                    a = this._keyStr.indexOf(e.charAt(f++));
+                    n = s << 2 | o >> 4;
+                    r = (o & 15) << 4 | u >> 2;
+                    i = (u & 3) << 6 | a;
+                    t = t + String.fromCharCode(n);
+                    if (u != 64) {
+                        t = t + String.fromCharCode(r)
+                    }
+                    if (a != 64) {
+                        t = t + String.fromCharCode(i)
+                    }
+                }
+                t = Base64._utf8_decode(t);
+                return t
+            },
+            _utf8_encode: function(e) {
+                e = e.replace(/\r\n/g, "\n");
+                var t = "";
+                for (var n = 0; n < e.length; n++) {
+                    var r = e.charCodeAt(n);
+                    if (r < 128) {
+                        t += String.fromCharCode(r)
+                    } else if (r > 127 && r < 2048) {
+                        t += String.fromCharCode(r >> 6 | 192);
+                        t += String.fromCharCode(r & 63 | 128)
+                    } else {
+                        t += String.fromCharCode(r >> 12 | 224);
+                        t += String.fromCharCode(r >> 6 & 63 | 128);
+                        t += String.fromCharCode(r & 63 | 128)
+                    }
+                }
+                return t
+            },
+            _utf8_decode: function(e) {
+                var t = "";
+                var n = 0;
+                var r = c1 = c2 = 0;
+                while (n < e.length) {
+                    r = e.charCodeAt(n);
+                    if (r < 128) {
+                        t += String.fromCharCode(r);
+                        n++
+                    } else if (r > 191 && r < 224) {
+                        c2 = e.charCodeAt(n + 1);
+                        t += String.fromCharCode((r & 31) << 6 | c2 & 63);
+                        n += 2
+                    } else {
+                        c2 = e.charCodeAt(n + 1);
+                        c3 = e.charCodeAt(n + 2);
+                        t += String.fromCharCode((r & 15) << 12 | (c2 & 63) << 6 | c3 & 63);
+                        n += 3
+                    }
+                }
+                return t
+            }
+        }
+    </script>
     <style>
         * {
             margin: 0px;
             padding: 0px;
+        }
+        
+        body {
+            background: rgb(68, 65, 65);
         }
         
         .container {
@@ -49,25 +146,20 @@
         #tiles_list {
             list-style-type: none;
             width: 100%;
-            overflow: auto;
         }
         
         #tiles_list li {
             display: inline-block;
-            width: 20%;
-            height: 80px;
-            max-height: 80px;
-            min-height: 80px;
+            width: 64px;
+            height: 64px;
             margin-top: 10px;
         }
         
         #tiles_list li img {
             display: block;
             margin: 0 auto;
-            width: 80%;
-            height: 80px;
-            max-height: 80px;
-            min-height: 80px;
+            width: 64px;
+            height: 64px;
         }
         
         input {
@@ -202,6 +294,14 @@
             background: rgb(43, 33, 35);
             overflow: auto;
             border: 2px solid #3e8e41;
+        }
+        
+        #canvas_nav {
+            display: block;
+            margin: 0 auto;
+            width: 90%;
+            min-height: 350px;
+            border: 1px solid #3e8e41;
         }
         
         #selected_tile_container .tile_texture {
@@ -417,10 +517,12 @@
                     <i id="select_tool" class="fa fa-hand-pointer-o"></i>
                 </li>
                 <li>
-                    <i id="multi_select_tool" class=" fa fa-hand-stop-o"></i>
+                    <i id="multi_select_tool" class="fa fa-hand-stop-o"></i>
+                </li>
+                <li>
+                    <i id="fill_tool" class="fa fi-paint-bucket" style="font-size:18px;"></i>
                 </li>
             </ul>
-
             <img id="selectedTexture" src="https://opengameart.org/sites/default/files/Transparency500.png" />
         </div>
         <div class="main_section">
@@ -429,6 +531,7 @@
             <input type="button" value="-" class="zoom" id="zoom_out" />
         </div>
         <div class="options">
+            <canvas id="canvas_nav"></canvas>
             <small>Selected tile layers:</small>
             <div id="selected_tile_container">
 
@@ -483,17 +586,26 @@
         </script>
 
         <script id="tile_layer_template" type="text/x-handlebars-template">
-            <div class="tile_texture">
-                <img src="https://ak5.picdn.net/shutterstock/videos/559285/thumb/1.jpg?i10c=img.resize(height:160)" /><span class="layer_name">hello</span>
+            <div class="tile_texture" id="">
+                <img src="{{url}}" /><span class="layer_name">Texture ID: {{id}}</span>
                 <i class=" fa fa-trash-o"></i>
             </div>
+        </script>
+
+        <script id="texture_template" type="text/x-handlebars-template">
+            <li id="texture{{id}}" class="li" data-id="{{id}}">
+                <img src="{{url}}" data-id="{{id}}" />
+            </li>
         </script>
     </div>
     <script>
         const map_canvas = document.getElementById('map_canvas'),
-            ctx = map_canvas.getContext('2d');
+            ctx = map_canvas.getContext('2d'),
+            canvas_nav = document.getElementById('canvas_nav'),
+            canvas_nav_ctx = canvas_nav.getContext('2d');
         map_canvas.width = 800;
-        map_canvas.height = 1000;
+        map_canvas.height = 600;
+        canvas_nav_ctx.fillRect(0, 0, canvas_nav.width, canvas_nav.height);
 
         let map = [],
             tWidth = 0,
@@ -509,6 +621,7 @@
             toPanY = 0,
             fc = 0,
             selectedTiles = [],
+            loadedTextures = [],
             mouseDownStarted = false;
 
         function set_cursor(text) {
@@ -544,18 +657,19 @@
                 dialog.style.display = 'none';
             })
             dialog.addEventListener('mousedown', function mouseDown(e) {
-                window.addEventListener('mousemove', dragDiv, true);
+                function moveDialog(drag) {
+                    dragDiv(drag, e);
+                }
+                window.addEventListener('mousemove', moveDialog, true);
+                window.addEventListener('mouseup', function mouseUp() {
+                    window.removeEventListener('mousemove', moveDialog, true);
+                }, false);
             }, false);
 
-            window.addEventListener('mouseup', function mouseUp() {
-                window.removeEventListener('mousemove', dragDiv, true);
-            }, false);
-
-            function dragDiv(e) {
-                var div = document.getElementById('dialog');
-                div.style.position = 'absolute';
-                div.style.top = e.clientY + 'px';
-                div.style.left = e.clientX + 'px';
+            function dragDiv(dragEvent, mousedownEvent) {
+                dialog.style.position = 'absolute';
+                dialog.style.top = dragEvent.clientY + 'px';
+                dialog.style.left = dragEvent.clientX + 'px';
             }
             dialog.style.display = 'block';
         }
@@ -576,14 +690,13 @@
             }
         }
 
-        set_cursor('\uf040');
-
-
+        //set_cursor('\uf040');
 
         document.getElementById('selectedTexture').onclick = function() {
             showDialog('textures_dialog', {
                 title: 'Select or add texture'
             });
+            display_all_textures_in_dom();
             document.getElementById('image').onchange = read_image_url;
             document.getElementById('add_tile_image').onclick = add_tile_image;
             document.getElementById('add_tile_map').onclick = add_tile_map;
@@ -612,6 +725,10 @@
             mouseDownEvent = null;
         }
 
+        let canvasX = 0;
+        let canvasY = 0;
+
+
         function handle_canvas_mouse_move(event) {
             const rect = map_canvas.getBoundingClientRect();
 
@@ -624,23 +741,24 @@
             const ratioX = map_canvas.width / boundingRectWidth;
             const ratioY = map_canvas.height / boundingRectHeight;
 
-            const canvasX = cX * ratioX;
-            const canvasY = cY * ratioY;
+            canvasX = cX * ratioX;
+            canvasY = cY * ratioY;
 
             if (!map.length && mouseDownEvent) {
                 alert('Please generate a map before attempting to use the canvas area.');
                 mouseDownEvent = null;
-            } else if (map.length && canvasX >= Math.abs(mapOffsetX) && canvasX <= (map.length * tWidth * scale) -
+            } else if (map.length && canvasX >= mapOffsetX * -1 && canvasX <= (map.length * tWidth * scale) -
                 mapOffsetX &&
-                canvasY >= Math.abs(mapOffsetY) && canvasY < (map[0].length * tHeight * scale) - mapOffsetY) {
+                canvasY >= mapOffsetY * -1 && canvasY < (map[0].length * tHeight * scale) - mapOffsetY) {
+
 
                 //Coordinates for the selected grid tile
-                const aX = Math.floor((canvasX + mapOffsetX) / (64 * scale));
-                const aY = Math.floor((canvasY + mapOffsetY) / (64 * scale));
+                const aX = Math.floor((canvasX + mapOffsetX) / (tWidth * scale));
+                const aY = Math.floor((canvasY + mapOffsetY) / (tHeight * scale));
 
                 switch (selectedTool) {
                     case 'pencil_tool':
-                        set_cursor('\uf040');
+                        // set_cursor('\uf040');
                         if (!mouseDownEvent) {
                             return;
                         }
@@ -665,7 +783,7 @@
                         }
                         break;
                     case 'eraser_tool':
-                        set_cursor('\uf12d');
+                        // set_cursor('\uf12d');
                         if (!mouseDownEvent) {
                             return;
                         }
@@ -686,7 +804,7 @@
 
                         break;
                     case 'select_tool':
-                        set_cursor('\uf25a');
+                        //set_cursor('\uf25a');
 
                         if (!mouseDownEvent) {
                             return;
@@ -701,10 +819,12 @@
                             return;
                         }
 
-                        selectedTiles = [{
+                        selectedTiles = {};
+                        const s = `${aX}:${aY}`;
+                        selectedTiles[s] = {
                             x: aX,
                             y: aY
-                        }];
+                        }
 
                         const asArray = Array.isArray(selected) ? selected : [selected];
 
@@ -721,7 +841,7 @@
                         })
                         break;
                     case 'multi_select_tool':
-                        set_cursor('\uf256');
+                        // set_cursor('\uf256');
 
                         if (!mouseDownEvent) {
                             mouseDownStarted = false;
@@ -729,34 +849,67 @@
                         }
 
                         const selectedTileContainerr = document.getElementById('selected_tile_container');
-                        const selectedd = map[aX][aY];
+
 
                         selectedTileContainerr.innerHTML = "";
 
-                        if (!selectedd) {
-                            return;
-                        }
+
 
                         if (!mouseDownStarted) {
-                            selectedTiles = [];
+                            selectedTiles = {};
                             mouseDownStarted = !mouseDownStarted;
                         }
 
-                        selectedTiles = selectedTiles || [];
-                        selectedTiles[selectedTiles.length] = {
+                        selectedTiles = selectedTiles || {};
+                        const p = `${aX}:${aY}`;
+                        selectedTiles[p] = {
                             x: aX,
                             y: aY
+                        }
+
+                        break;
+                    case 'fill_tool':
+                        // set_cursor('\uf18f');
+                        if (!mouseDownEvent) {
+                            return;
+                        }
+                        mouseDownEvent = null;
+
+                        if (!Object.keys(selectedTiles).length) {
+                            alert('Must have selected tiles to use the fill tool')
+                        }
+
+                        if (!selectedTexture) {
+                            alert('Must have texture selected to use the fill tool');
+                        }
+
+                        console.log('selected tiles: ', selectedTiles)
+
+                        for (key in selectedTiles) {
+                            const tile = map[selectedTiles[key].x][selectedTiles[key].y];
+                            if (!tile) {
+                                map[selectedTiles[key].x][selectedTiles[key].y] = {
+                                    image: selectedTexture.image,
+                                    id: selectedTexture.id
+                                }
+                            } else {
+                                tile.image = selectedTexture.image;
+                            }
                         }
                         break;
                 }
             } else {
-                delete map_canvas.style.cursor;
-                map_canvas.style.cursor = "move, auto";
+                // set_cursor('\uf047');
                 if (mouseDownEvent) {
+
                     const dX = mouseDownEvent.clientX - event.clientX;
                     const dY = mouseDownEvent.clientY - event.clientY;
+
+                    console.log(dX);
+                    console.log(dY);
                     mapOffsetX = dX;
                     mapOffsetY = dY;
+
                 }
             }
         }
@@ -780,9 +933,15 @@
         }
 
         let lt = Date.now();
+        const canvas_nav_camera_view = document.createElement('div')
 
         function update() {
             requestAnimationFrame(update);
+
+
+            /*
+                Panning overtime
+            */
             const ct = Date.now();
             const timePassed = ct - lt;
             const currentFPS = 1000 / timePassed;
@@ -794,39 +953,117 @@
             mapOffsetX += toPanX / currentFPS;
             mapOffsetY += toPanY / currentFPS;
             fc++;
+
+            if (mapOffsetX <= -100) mapOffsetX = -100;
+            if (mapOffsetX + map_canvas.width >= map.length * tWidth + 100) mapOffsetX = map.length * tWidth + 100
+
+            if (mapOffsetY <= -100) mapOffsetY = -100;
+            if (mapOffsetY >= map.length * tHeight + 100) mapOffsetY = (map[0] && map[0].length || 0) * tHeight + 100
+
+
+            // Clear both canvas's
             ctx.clearRect(0, 0, map_canvas.width, map_canvas.height);
+            canvas_nav_ctx.clearRect(0, 0, canvas_nav.width, canvas_nav.height);
+
             // document.getElementById('canvas_fill').value || 
+            /*Canvas background colors*/
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(0, 0, map_canvas.width, map_canvas.height);
+            canvas_nav_ctx.fillStyle = '#FFFFFF';
+            canvas_nav_ctx.fillRect(0, 0, canvas_nav.width, canvas_nav.height);
+
+            const canvas_nav_width = canvas_nav.width;
+            const canvas_nav_height = canvas_nav.height;
+
+            //Ratio of canvasnav:mapcanvas
+            const rX = canvas_nav_width / map_canvas.width;
+            const rY = canvas_nav_height / map_canvas.height;
+
+
+            //Scale of the canvas navigation area.
+            let canvas_nav_ctx_scaleX = 1;
+            let canvas_nav_ctx_scaleY = 1;
+
+            let canvas_nav_inset_x = rX * 200;
+            let canvas_nav_inset_y = rY * 200;
+
+
+            if (map.length) {
+                //Solves for x: tWidth*x*map.length=canvas_nav_width
+                canvas_nav_ctx_scaleX = (canvas_nav_width - canvas_nav_inset_x) / tWidth / map.length;
+                canvas_nav_ctx_scaleY = (canvas_nav_height - canvas_nav_inset_y) / tHeight / map[0].length;
+            }
+
+            const totalScreenSizeX = 200 + map.length * tWidth;
+            const totalScreenSizeY = 200 + ((map[0] && map[0].length) || 0) * tHeight;
+            const viewPortionX = map_canvas.width / totalScreenSizeX;
+            const viewPortionY = map_canvas.height / totalScreenSizeY;
+
+            const canvas_nav_view_portion_x = ((canvas_nav_width) * viewPortionX);
+            const canvas_nav_view_portion_y = ((canvas_nav_height) * viewPortionY);
+            //Renders the map/grid
             for (let i = 0; i < map.length; i++) {
                 for (let j = 0; j < map[i].length; j++) {
                     // document.getElementById('grid_color').value
                     ctx.strokeStyle = 'orange';
-
+                    canvas_nav_ctx.strokeStyle = 'orange';
                     if (!map[i][j]) {
                         ctx.strokeRect((i * tWidth * scale) - mapOffsetX, (j * tHeight * scale) - mapOffsetY,
                             tWidth * scale, tHeight * scale);
+
+                        // canvas_nav_ctx.strokeRect((i * tWidth * canvas_nav_ctx_scaleX) + canvas_nav_inset_x / 2, (j * tHeight * canvas_nav_ctx_scaleY) + canvas_nav_inset_y / 2,
+                        // tWidth * canvas_nav_ctx_scaleX, tHeight * canvas_nav_ctx_scaleY);
                     } else {
                         const arr = !Array.isArray(map[i][j]) ? [map[i][j]] : map[i][j];
                         for (let k = 0; k < arr.length; k++) {
                             if (arr[k].image) {
                                 ctx.drawImage(arr[k].image, (i * tWidth * scale) - mapOffsetX, (j * tHeight * scale) -
                                     mapOffsetY, tWidth * scale, tHeight * scale)
+
+                                canvas_nav_ctx.drawImage(arr[k].image, (i * tWidth * canvas_nav_ctx_scaleX) + canvas_nav_inset_x / 2,
+                                    (j * tHeight * canvas_nav_ctx_scaleY) + canvas_nav_inset_y / 2, tWidth * canvas_nav_ctx_scaleX, tHeight * canvas_nav_ctx_scaleY)
                             }
                         }
                     }
+                    const s = `${i}:${j}`;
+                    if (selectedTiles[s]) {
+                        ctx.strokeStyle = 'red';
+                        ctx.strokeRect((i * tWidth * scale) - mapOffsetX, (j * tHeight * scale) - mapOffsetY,
+                            tWidth * scale, tHeight * scale);
 
-                    if (selectedTiles) {
-                        for (let p = 0; p < selectedTiles.length; p++) {
-                            if (selectedTiles[p].x == i && selectedTiles[p].y == j) {
-                                ctx.strokeStyle = 'red';
-                                ctx.strokeRect((i * tWidth * scale) - mapOffsetX, (j * tHeight * scale) - mapOffsetY,
-                                    tWidth * scale, tHeight * scale);
-                            }
-                        }
+                        canvas_nav_ctx.strokeStyle = 'red';
+                        canvas_nav_ctx.strokeRect((i * tWidth * canvas_nav_ctx_scaleX) + canvas_nav_inset_x / 2, (j * tHeight * canvas_nav_ctx_scaleY) + canvas_nav_inset_y / 2,
+                            tWidth * canvas_nav_ctx_scaleX, tHeight * canvas_nav_ctx_scaleY);
                     }
                 }
             }
+            //canvas_nav_ctx.strokeStyle = 'red';
+            //canvas_nav_ctx.strokeRect(0, 0, w, h);
+
+            //canvas coordinates
+
+            ctx.fillStyle = 'black';
+            ctx.strokeStyle = 'red';
+            // draw your text (it will be centered at the specified x,y)
+            ctx.fillText(`Canvas (${canvasX.toFixed(0)},${canvasY.toFixed(0)})`, 60, 20);
+            const gridX = (canvasX + mapOffsetX) / scale;
+            const gridY = (canvasY + mapOffsetY) / scale;
+            ctx.fillText(`World (${gridX.toFixed(0)},${gridY.toFixed(0)})`, 180, 20);
+            const aX = Math.floor((canvasX + mapOffsetX) / (tWidth * scale));
+            const aY = Math.floor((canvasY + mapOffsetY) / (tHeight * scale));
+            ctx.fillText(`Grid (${aX},${aY})`, 300, 20);
+            ctx.fillText(`Grid offset (${mapOffsetX},${mapOffsetY})`, 420, 20);
+
+
+            canvas_nav_ctx.strokeStyle = 'red';
+            canvas_nav_ctx.strokeRect((canvas_nav_inset_x / 2) + (mapOffsetX * canvas_nav_ctx_scaleX), (canvas_nav_inset_y / 2) + (mapOffsetY * canvas_nav_ctx_scaleY),
+                canvas_nav_view_portion_x + canvas_nav_inset_x, canvas_nav_view_portion_y + canvas_nav_inset_y / 2);
+
+
+
+
+
+
         }
 
         function read_image_url(event) {
@@ -896,14 +1133,6 @@
             closeOpenDialog();
         }
 
-        function add_tile_map(event) {
-            //Display dialog asking for these values
-            add_tile_image({
-                tsX: 64,
-                tsY: 64
-            });
-        }
-
         function display_all_textures_in_dom() {
             if (!loadedTextures) return;
             for (let i = 0; i < loadedTextures.length; i++) {
@@ -915,16 +1144,50 @@
             }
         }
 
+        const domParser = new DOMParser();
+
         function add_texture_to_dom(obj) {
-            const container = document.getElementById('selected_tile_container');
+            const container = document.getElementById('tiles_list');
             if (!container) return;
 
-            const template = document.getElementById("tile_layer_template");
+            const template = document.getElementById("texture_template");
             if (!template) return;
+
+            if (!obj || !obj.url || !obj.id || obj.id < 1) {
+                console.log('Invalid params passed to add_texture_to_dom ', obj);
+                return;
+            }
+
+            console.log('adding texture to dom ', obj)
 
             const compiled = Handlebars.compile(template.innerHTML);
             const out = compiled(obj);
-            container.appendChild(out);
+            const textureEle = domParser.parseFromString(out, 'text/html').documentElement.lastElementChild.firstElementChild;
+            container.appendChild(textureEle);
+
+            textureEle.onclick = function(event) {
+                console.log('click')
+                const eles = document.querySelectorAll('#tiles_list li');
+                for (let i = 0; i < eles.length; i++) {
+                    eles[i].style.border = 'none';
+                }
+                textureEle.style.border = '2px solid red';
+                selectedTexture = {
+                    id: obj.id,
+                    image: textureEle.children[0]
+                };
+                console.log(selectedTexture)
+                document.getElementById('selectedTexture').src = obj.url;
+            }
+            console.dir(textureEle);
+        }
+
+        function add_tile_map(event) {
+            //Display dialog asking for these values
+            add_tile_image({
+                tsX: 64,
+                tsY: 64
+            });
         }
 
         function add_tile_image(event) {
@@ -968,98 +1231,6 @@
             }
 
             image.src = url;
-        }
-
-
-        var Base64 = {
-            _keyStr: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
-            encode: function(e) {
-                var t = "";
-                var n, r, i, s, o, u, a;
-                var f = 0;
-                e = Base64._utf8_encode(e);
-                while (f < e.length) {
-                    n = e.charCodeAt(f++);
-                    r = e.charCodeAt(f++);
-                    i = e.charCodeAt(f++);
-                    s = n >> 2;
-                    o = (n & 3) << 4 | r >> 4;
-                    u = (r & 15) << 2 | i >> 6;
-                    a = i & 63;
-                    if (isNaN(r)) {
-                        u = a = 64
-                    } else if (isNaN(i)) {
-                        a = 64
-                    }
-                    t = t + this._keyStr.charAt(s) + this._keyStr.charAt(o) + this._keyStr.charAt(u) + this._keyStr.charAt(a)
-                }
-                return t
-            },
-            decode: function(e) {
-                var t = "";
-                var n, r, i;
-                var s, o, u, a;
-                var f = 0;
-                e = e.replace(/[^A-Za-z0-9\+\/\=]/g, "");
-                while (f < e.length) {
-                    s = this._keyStr.indexOf(e.charAt(f++));
-                    o = this._keyStr.indexOf(e.charAt(f++));
-                    u = this._keyStr.indexOf(e.charAt(f++));
-                    a = this._keyStr.indexOf(e.charAt(f++));
-                    n = s << 2 | o >> 4;
-                    r = (o & 15) << 4 | u >> 2;
-                    i = (u & 3) << 6 | a;
-                    t = t + String.fromCharCode(n);
-                    if (u != 64) {
-                        t = t + String.fromCharCode(r)
-                    }
-                    if (a != 64) {
-                        t = t + String.fromCharCode(i)
-                    }
-                }
-                t = Base64._utf8_decode(t);
-                return t
-            },
-            _utf8_encode: function(e) {
-                e = e.replace(/\r\n/g, "\n");
-                var t = "";
-                for (var n = 0; n < e.length; n++) {
-                    var r = e.charCodeAt(n);
-                    if (r < 128) {
-                        t += String.fromCharCode(r)
-                    } else if (r > 127 && r < 2048) {
-                        t += String.fromCharCode(r >> 6 | 192);
-                        t += String.fromCharCode(r & 63 | 128)
-                    } else {
-                        t += String.fromCharCode(r >> 12 | 224);
-                        t += String.fromCharCode(r >> 6 & 63 | 128);
-                        t += String.fromCharCode(r & 63 | 128)
-                    }
-                }
-                return t
-            },
-            _utf8_decode: function(e) {
-                var t = "";
-                var n = 0;
-                var r = c1 = c2 = 0;
-                while (n < e.length) {
-                    r = e.charCodeAt(n);
-                    if (r < 128) {
-                        t += String.fromCharCode(r);
-                        n++
-                    } else if (r > 191 && r < 224) {
-                        c2 = e.charCodeAt(n + 1);
-                        t += String.fromCharCode((r & 31) << 6 | c2 & 63);
-                        n += 2
-                    } else {
-                        c2 = e.charCodeAt(n + 1);
-                        c3 = e.charCodeAt(n + 2);
-                        t += String.fromCharCode((r & 15) << 12 | (c2 & 63) << 6 | c3 & 63);
-                        n += 3
-                    }
-                }
-                return t
-            }
         }
 
         function save_map(event) {
